@@ -1,0 +1,369 @@
+diff -rup src_patched/linux-5.16/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts src/linux-5.16/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
+--- src_patched/linux-5.16/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts	2022-05-13 20:38:09.692743592 +0000
++++ src/linux-5.16/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts	2022-05-17 10:09:54.077329149 +0000
+@@ -987,3 +987,25 @@
+ 	};
+ };
+ 
++&rockchip_suspend {
++	status = "okay";
++	rockchip,sleep-debug-en = <0>;
++	rockchip,sleep-mode-config = <
++		(0
++		| RKPM_SLP_ARMPD
++		| RKPM_SLP_PERILPPD
++		| RKPM_SLP_DDR_RET
++		| RKPM_SLP_PLLPD
++		| RKPM_SLP_CENTER_PD
++		| RKPM_SLP_AP_PWROFF
++		)
++	>;
++	rockchip,pwm-regulator-config = <
++		(0
++		| PWM2_REGULATOR_EN
++		)
++	>;
++	rockchip,power-ctrl =
++    <&gpio0 RK_PA5 GPIO_ACTIVE_HIGH>; // power-key
++};
++
+diff -rup src_patched/linux-5.16/.config src/linux-5.16/.config
+--- src_patched/linux-5.16/.config	2022-05-13 20:38:19.676184211 +0000
++++ src/linux-5.16/.config	2022-05-15 17:00:33.721616951 +0000
+@@ -1,19 +1,20 @@
+ #
+ # Automatically generated file; DO NOT EDIT.
+-# Linux/arm64 5.16.0-1 Kernel Configuration
++# Linux/arm64 5.16.2-4 Kernel Configuration
+ #
+-CONFIG_CC_VERSION_TEXT="gcc (GCC) 10.2.0"
++CONFIG_CC_VERSION_TEXT="gcc (GCC) 11.2.0"
+ CONFIG_CC_IS_GCC=y
+-CONFIG_GCC_VERSION=100200
++CONFIG_GCC_VERSION=110200
+ CONFIG_CLANG_VERSION=0
+ CONFIG_AS_IS_GNU=y
+-CONFIG_AS_VERSION=23500
++CONFIG_AS_VERSION=23800
+ CONFIG_LD_IS_BFD=y
+-CONFIG_LD_VERSION=23500
++CONFIG_LD_VERSION=23800
+ CONFIG_LLD_VERSION=0
+ CONFIG_CC_CAN_LINK=y
+ CONFIG_CC_CAN_LINK_STATIC=y
+ CONFIG_CC_HAS_ASM_GOTO=y
++CONFIG_CC_HAS_ASM_GOTO_OUTPUT=y
+ CONFIG_CC_HAS_ASM_INLINE=y
+ CONFIG_CC_HAS_NO_PROFILE_FN_ATTR=y
+ CONFIG_IRQ_WORK=y
+@@ -2147,6 +2148,7 @@ CONFIG_EFI_CAPSULE_LOADER=m
+ 
+ CONFIG_EFI_EARLYCON=y
+ CONFIG_EFI_CUSTOM_SSDT_OVERLAYS=y
++CONFIG_ROCKCHIP_SIP=y
+ CONFIG_ARM_PSCI_FW=y
+ # CONFIG_ARM_PSCI_CHECKER is not set
+ CONFIG_HAVE_ARM_SMCCC=y
+@@ -6547,11 +6549,7 @@ CONFIG_USB_MON=y
+ # USB Host Controller Drivers
+ #
+ # CONFIG_USB_C67X00_HCD is not set
+-CONFIG_USB_XHCI_HCD=n
+-# CONFIG_USB_XHCI_DBGCAP is not set
+-CONFIG_USB_XHCI_PCI=n
+-# CONFIG_USB_XHCI_PCI_RENESAS is not set
+-CONFIG_USB_XHCI_PLATFORM=n
++# CONFIG_USB_XHCI_HCD is not set
+ CONFIG_USB_EHCI_HCD=y
+ CONFIG_USB_EHCI_ROOT_HUB_TT=y
+ CONFIG_USB_EHCI_TT_NEWSCHED=y
+@@ -7643,6 +7641,7 @@ CONFIG_SOC_BRCMSTB=y
+ CONFIG_ROCKCHIP_GRF=y
+ CONFIG_ROCKCHIP_IODOMAIN=y
+ CONFIG_ROCKCHIP_PM_DOMAINS=y
++CONFIG_ROCKCHIP_SUSPEND_MODE=y
+ # CONFIG_SOC_TI is not set
+ 
+ #
+@@ -8808,6 +8807,8 @@ CONFIG_INIT_STACK_NONE=y
+ # CONFIG_GCC_PLUGIN_STACKLEAK is not set
+ # CONFIG_INIT_ON_ALLOC_DEFAULT_ON is not set
+ # CONFIG_INIT_ON_FREE_DEFAULT_ON is not set
++CONFIG_CC_HAS_ZERO_CALL_USED_REGS=y
++# CONFIG_ZERO_CALL_USED_REGS is not set
+ # end of Memory initialization
+ # end of Kernel hardening options
+ # end of Security options
+@@ -9239,6 +9240,7 @@ CONFIG_KGDB_TESTS=y
+ # CONFIG_KGDB_KDB is not set
+ CONFIG_ARCH_HAS_UBSAN_SANITIZE_ALL=y
+ # CONFIG_UBSAN is not set
++CONFIG_HAVE_KCSAN_COMPILER=y
+ # end of Generic Kernel Debugging Instruments
+ 
+ CONFIG_DEBUG_KERNEL=y
+@@ -9278,6 +9280,7 @@ CONFIG_HAVE_ARCH_KASAN_SW_TAGS=y
+ CONFIG_HAVE_ARCH_KASAN_HW_TAGS=y
+ CONFIG_HAVE_ARCH_KASAN_VMALLOC=y
+ CONFIG_CC_HAS_KASAN_GENERIC=y
++CONFIG_CC_HAS_KASAN_SW_TAGS=y
+ CONFIG_CC_HAS_WORKING_NOSANITIZE_ADDRESS=y
+ # CONFIG_KASAN is not set
+ CONFIG_HAVE_ARCH_KFENCE=y
+diff -rup src_patched/linux-5.16/drivers/soc/rockchip/rockchip_pm_config.c src/linux-5.16/drivers/soc/rockchip/rockchip_pm_config.c
+--- src_patched/linux-5.16/drivers/soc/rockchip/rockchip_pm_config.c	2022-05-13 20:38:15.909477111 +0000
++++ src/linux-5.16/drivers/soc/rockchip/rockchip_pm_config.c	2022-05-18 16:45:07.716197154 +0000
+@@ -16,98 +16,27 @@
+ #include <linux/regulator/machine.h>
+ #include <linux/rockchip/rockchip_sip.h>
+ #include <linux/suspend.h>
++#include <linux/cpuidle.h>
+ #include <dt-bindings/input/input.h>
+ 
+-#define PM_INVALID_GPIO	0xffff
+-
+-static const struct of_device_id pm_match_table[] = {
+-	{ .compatible = "rockchip,pm-rk3399",},
+-	{ },
+-};
+-
+-#define MAX_PWRKEY_NUMS		20
+-#define MAX_NUM_KEYS		60
+-
+-struct rkxx_remote_key_table {
+-	int scancode;
+-	int keycode;
+-};
+-
+-static int parse_ir_pwrkeys(unsigned int *pwrkey, int size, int *nkey)
++static inline int pm_sleep_disable_secondary_cpus(void)
+ {
+-	struct device_node *node;
+-	struct device_node *child_node;
+-	struct rkxx_remote_key_table key_table[MAX_NUM_KEYS];
+-	int i;
+-	int len = 0, nbuttons;
+-	int num = 0;
+-	u32 usercode, scancode;
+-
+-	for_each_node_by_name(node, "pwm") {
+-		for_each_child_of_node(node, child_node) {
+-			if (of_property_read_u32(child_node,
+-						 "rockchip,usercode",
+-						 &usercode))
+-				break;
+-
+-			if (of_get_property(child_node,
+-					    "rockchip,key_table",
+-					    &len) == NULL ||
+-			    len <= 0)
+-				break;
+-
+-			len = len < sizeof(key_table) ? len : sizeof(key_table);
+-			len /= sizeof(u32);
+-			if (of_property_read_u32_array(child_node,
+-						       "rockchip,key_table",
+-						       (u32 *)key_table,
+-						       len))
+-				break;
+-
+-			nbuttons = len / 2;
+-			for (i = 0; i < nbuttons && num < size; ++i) {
+-				if (key_table[i].keycode == KEY_POWER) {
+-					scancode = key_table[i].scancode;
+-					pr_debug("usercode=%x, key=%x\n",
+-						 usercode, scancode);
+-					pwrkey[num] = (usercode & 0xffff) << 16;
+-					pwrkey[num] |= (scancode & 0xff) << 8;
+-					++num;
+-				}
+-			}
+-		}
+-	}
+-
+-	*nkey = num;
+-
+-	return num ? 0 : -1;
++	cpuidle_pause();
++	return suspend_disable_secondary_cpus();
+ }
+ 
+-static void rockchip_pm_virt_pwroff_prepare(void)
++static inline void pm_sleep_enable_secondary_cpus(void)
+ {
+-	int error;
+-	int i, nkey;
+-	u32 power_key[MAX_PWRKEY_NUMS];
+-
+-	if ((parse_ir_pwrkeys(power_key, ARRAY_SIZE(power_key), &nkey))) {
+-		pr_err("Parse ir powerkey code failed!\n");
+-		return;
+-	}
+-
+-	for (i = 0; i < nkey; ++i)
+-		sip_smc_set_suspend_mode(VIRTUAL_POWEROFF, 1, power_key[i]);
+-
+-	regulator_suspend_prepare(PM_SUSPEND_MEM);
++	suspend_enable_secondary_cpus();
++	cpuidle_resume();
++}
+ 
+-	error = disable_nonboot_cpus();
+-	if (error) {
+-		pr_err("Disable nonboot cpus failed!\n");
+-		return;
+-	}
++#define PM_INVALID_GPIO	0xffff
+ 
+-	sip_smc_set_suspend_mode(VIRTUAL_POWEROFF, 0, 1);
+-	sip_smc_virtual_poweroff();
+-}
++static const struct of_device_id pm_match_table[] = {
++	{ .compatible = "rockchip,pm-rk3399",},
++	{ },
++};
+ 
+ static int __init pm_config_init(struct platform_device *pdev)
+ {
+@@ -119,46 +48,65 @@ static int __init pm_config_init(struct
+ 	int gpio_temp[10];
+ 	u32 sleep_debug_en = 0;
+ 	u32 apios_suspend = 0;
+-	u32 virtual_poweroff_en = 0;
++	/*u32 virtual_poweroff_en = 0;*/
+ 	enum of_gpio_flags flags;
+ 	int i = 0;
++  int result = 0;
+ 	int length;
+ 
++  pr_err("pm_config_init: begin");
++
+ 	match_id = of_match_node(pm_match_table, pdev->dev.of_node);
+-	if (!match_id)
++	if (!match_id) {
++    pr_err("pm_config_init: of_match_node");
+ 		return -ENODEV;
++  }
+ 
+ 	node = of_find_node_by_name(NULL, "rockchip-suspend");
+ 
+ 	if (IS_ERR_OR_NULL(node)) {
+ 		dev_err(&pdev->dev, "%s dev node err\n",  __func__);
++    pr_err("pm_config_init: of_find_node_by_name");
+ 		return -ENODEV;
+ 	}
+ 
+ 	if (of_property_read_u32_array(node,
+ 				       "rockchip,sleep-mode-config",
+-				       &mode_config, 1))
++				       &mode_config, 1)) {
+ 		dev_warn(&pdev->dev, "not set sleep mode config\n");
+-	else
+-		sip_smc_set_suspend_mode(SUSPEND_MODE_CONFIG, mode_config, 0);
++    pr_err("pm_config_init: not set sleep mode config");
++  }
++	else {
++		result = sip_smc_set_suspend_mode(SUSPEND_MODE_CONFIG, mode_config, 0);
++    pr_err("pm_config_init: sip_smc_set_suspend_mode(SUSPEND_MODE_CONFIG) ret = %d", result);
++  }
+ 
+ 	if (of_property_read_u32_array(node,
+ 				       "rockchip,wakeup-config",
+-				       &wakeup_config, 1))
++				       &wakeup_config, 1)) {
+ 		dev_warn(&pdev->dev, "not set wakeup-config\n");
+-	else
+-		sip_smc_set_suspend_mode(WKUP_SOURCE_CONFIG, wakeup_config, 0);
++    pr_err("pm_config_init: not set wakeup config");
++  }
++	else {
++		result = sip_smc_set_suspend_mode(WKUP_SOURCE_CONFIG, wakeup_config, 0);
++    pr_err("pm_config_init: sip_smc_set_suspend_mode(WKUP_SOURCE_CONFIG) ret = %d", result);
++  }
+ 
+ 	if (of_property_read_u32_array(node,
+ 				       "rockchip,pwm-regulator-config",
+-				       &pwm_regulator_config, 1))
++				       &pwm_regulator_config, 1)) {
++    pr_err("pm_config_init: not set pwm-regulator-config");
+ 		dev_warn(&pdev->dev, "not set pwm-regulator-config\n");
+-	else
+-		sip_smc_set_suspend_mode(PWM_REGULATOR_CONFIG,
+-					 pwm_regulator_config,
+-					 0);
++  }
++	else {
++		result = sip_smc_set_suspend_mode(PWM_REGULATOR_CONFIG,
++					         pwm_regulator_config,
++					         0);
++    pr_err("pm_config_init: sip_smc_set_suspend_mode(PWM_REGULATOR_CONFIG) ret = %d", result);
++  }
+ 
+ 	length = of_gpio_named_count(node, "rockchip,power-ctrl");
++  pr_err("pm_config_init: of_gpio_named_count: %d", length);
+ 
+ 	if (length > 0 && length < 10) {
+ 		for (i = 0; i < length; i++) {
+@@ -168,9 +116,10 @@ static int __init pm_config_init(struct
+ 							     &flags);
+ 			if (!gpio_is_valid(gpio_temp[i]))
+ 				break;
+-			sip_smc_set_suspend_mode(GPIO_POWER_CONFIG,
+-						 i,
+-						 gpio_temp[i]);
++			result = sip_smc_set_suspend_mode(GPIO_POWER_CONFIG,
++						        i,
++						        gpio_temp[i]);
++      pr_err("pm_config_init: sip_smc_set_suspend_mode(GPIO_POWER_CONFIG, %d [%d]) ret = %d", i, gpio_temp[i], result);
+ 		}
+ 	}
+ 	sip_smc_set_suspend_mode(GPIO_POWER_CONFIG, i, PM_INVALID_GPIO);
+@@ -189,11 +138,14 @@ static int __init pm_config_init(struct
+ 					 apios_suspend,
+ 					 0);
+ 
+-	if (!of_property_read_u32_array(node,
+-					"rockchip,virtual-poweroff",
+-					&virtual_poweroff_en, 1) &&
+-	    virtual_poweroff_en)
+-		pm_power_off_prepare = rockchip_pm_virt_pwroff_prepare;
++	/*if (!of_property_read_u32_array(node,*/
++					/*"rockchip,virtual-poweroff",*/
++					/*&virtual_poweroff_en, 1) &&*/
++			/*virtual_poweroff_en) {*/
++		/*pm_power_off_prepare = rockchip_pm_virt_pwroff_prepare;*/
++    /*pr_err("registered rockchip_pm_virt_pwroff_prepare");*/
++  /*}*/
++  /*suspend_set_ops(&rockchip_suspend_ops);*/
+ 
+ 	return 0;
+ }
+diff -rup src_patched/linux-5.16/scripts/dtc/include-prefixes/arm64/rockchip/rk3399-clockworkpi-a06.dts src/linux-5.16/scripts/dtc/include-prefixes/arm64/rockchip/rk3399-clockworkpi-a06.dts
+--- src_patched/linux-5.16/scripts/dtc/include-prefixes/arm64/rockchip/rk3399-clockworkpi-a06.dts	2022-05-13 20:38:09.692743592 +0000
++++ src/linux-5.16/scripts/dtc/include-prefixes/arm64/rockchip/rk3399-clockworkpi-a06.dts	2022-05-17 10:09:54.077329149 +0000
+@@ -987,3 +987,25 @@
+ 	};
+ };
+ 
++&rockchip_suspend {
++	status = "okay";
++	rockchip,sleep-debug-en = <0>;
++	rockchip,sleep-mode-config = <
++		(0
++		| RKPM_SLP_ARMPD
++		| RKPM_SLP_PERILPPD
++		| RKPM_SLP_DDR_RET
++		| RKPM_SLP_PLLPD
++		| RKPM_SLP_CENTER_PD
++		| RKPM_SLP_AP_PWROFF
++		)
++	>;
++	rockchip,pwm-regulator-config = <
++		(0
++		| PWM2_REGULATOR_EN
++		)
++	>;
++	rockchip,power-ctrl =
++    <&gpio0 RK_PA5 GPIO_ACTIVE_HIGH>; // power-key
++};
++
