@@ -1,0 +1,95 @@
+--- a/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
+@@ -192,8 +192,12 @@
+ 
+ 	battery: battery@0 {
+ 		compatible = "simple-battery";
++   device-chemistry = "lithium-ion";
+ 		constant-charge-current-max-microamp = <2100000>;
+-		voltage-min-design-microvolt = <3300000>;
++		voltage-min-design-microvolt = <2850000>;
++		voltage-max-design-microvolt = <4200000>;
++		re-charge-voltage-microvolt = <4000000>;
++   charge-full-design-microamp-hours = <3350000>;
+ 	};
+ 
+ 	ocp8178_backlight: backlight@0 {
+@@ -824,16 +828,20 @@
+ 	status = "okay";
+ };
+ 
++/* phy1 not connected
+ &tcphy1 {
+ 	status = "okay";
+ };
++*/
+ 
+ &u2phy0 {
+ 	status = "okay";
+ 
++  /*
+ 	u2phy0_otg: otg-port {
+ 		status = "okay";
+ 	};
++  */
+ 
+ 	u2phy0_host: host-port {
+ 		phy-supply = <&usb3_vbus>;
+@@ -841,6 +849,7 @@
+ 	};
+ };
+ 
++/* PHY1 is not connected
+ &u2phy1 {
+ 	status = "okay";
+ 
+@@ -853,23 +862,28 @@
+ 		status = "okay";
+ 	};
+ };
++*/
+ 
++// rockchip,rk3399-dwc3
+ &usbdrd3_0 {
+ 	status = "okay";
+ };
+ 
+-&usbdrd3_1 {
+-	status = "okay";
++&usbdrd_dwc3_0 {
++  status = "okay";
++  dr_mode = "host";
+ };
+ 
+-&usbdrd_dwc3_0 {
++/* phy1 not connected
++&usbdrd3_1 {
+ 	status = "okay";
+ };
+ 
+ &usbdrd_dwc3_1 {
+-	status = "okay";
+-	dr_mode = "host";
++  status = "okay";
++  dr_mode = "host";
+ };
++*/
+ 
+ &usb_host0_ehci {
+ 	status = "okay";
+@@ -879,6 +893,7 @@
+ 	status = "okay";
+ };
+ 
++/* host1 not connected
+ &usb_host1_ehci {
+ 	status = "okay";
+ };
+@@ -886,6 +901,7 @@
+ &usb_host1_ohci {
+ 	status = "okay";
+ };
++*/
+ 
+ &pinctrl {
+ 
