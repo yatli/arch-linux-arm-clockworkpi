@@ -4,11 +4,11 @@
 # Contributor: Kevin Mihelich <kevin@archlinuxarm.org>
 
 pkgbase=linux-clockworkpi-a06
-_srcname=linux-5.16
+_srcname=linux-5.18
 _kernelname=${pkgbase#linux}
 _desc="Kernel for ClockworkPI A06"
-pkgver=5.16.2
-pkgrel=5
+pkgver=5.18.9
+pkgrel=1
 arch=('aarch64')
 url="http://www.kernel.org/"
 license=('GPL2')
@@ -19,13 +19,10 @@ source=("http://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
         "http://www.kernel.org/pub/linux/kernel/v5.x/patch-${pkgver}.xz"
         '0001-net-smsc95xx-Allow-mac-address-to-be-set-as-a-parame.patch'
         '0023-drm-rockchip-support-gamma-control-on-RK3399.patch' # From list: https://patchwork.kernel.org/project/linux-arm-kernel/cover/20211019215843.42718-1-sigmaris@gmail.com/
-        '0024-Bluetooth-btsdio-Do-not-bind-to-non-removable-BCM4345-and-BCM43455.patch' # Applied in linux-next
         '0001-arm64-dts-clockworkpi-a06-dts.patch' # Potentially upstreamable, needs cleanup
         '0002-mfd-axp20x-add-clockworkpi-a06-power-support.patch' # Looks potentially incorrect. Probably not upstreamable
         '0004-gpu-drm-panel-add-cwd686-driver.patch' # Potentially upstreamable, needs cleanup
         '0005-video-backlight-add-ocp8178-driver.patch' # Potentially upstreamable, needs cleanup
-        '0006-fix-rockchip-mipi-dsi-display-init-timeouts.patch' # Applied in linux-next
-        '0026-fix-hibernate-resume-pd_gpu.patch' # https://www.spinics.net/lists/arm-kernel/msg857700.html
         '0030-a06-dts-fix.patch' # IRQ98 and i2s fix
         '0031-gpio-pwm.patch'    # https://lwn.net/Articles/830406/ slightly adapted
         '0031-gpio-pwm-dt.patch'
@@ -36,17 +33,14 @@ source=("http://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
         'linux.preset'
         '60-linux.hook'
         '90-linux.hook')
-md5sums=('e6680ce7c989a3efe58b51e3f3f0bf93'
-         '3ce3933c25c9a589fb072b81894a8f7b'
+md5sums=('58e80452e2d8e1993cd7ec95e697ab5a'
+         'f8615824acfd5dec5b6f385d96fa9565'
          '9e6b7f44db105fef525d715213dce7cf'
          'e2f08e3bc6d1b36e7000233abab1bfc7'
-         'a897b51be2d05ddb5b7b1a7a7f5a5205'
          'eea25fcfce96e8d40c058883764903ce'
-         'fc826c917102f2f2d16690fe9322464f'
+         'f4895fa5b399dec785102f3a4a091175'
          'f2577b39b1eda4a18b9111775843f83b'
          '3203d018422505068fc22b909df871aa'
-         '873658be357da087e5bc4f8d3a1e9c8c'
-         'SKIP'
          'SKIP'
          'SKIP'
          'SKIP'
@@ -69,14 +63,12 @@ prepare() {
   
   # Manjaro ARM Patches
   patch -Np1 -i "${srcdir}/0023-drm-rockchip-support-gamma-control-on-RK3399.patch"                     #RK3399
-  patch -Np1 -i "${srcdir}/0024-Bluetooth-btsdio-Do-not-bind-to-non-removable-BCM4345-and-BCM43455.patch" #Bluetooth
   
   # ClockworkPI DevTerm A06 patches
   patch -Np1 -i "${srcdir}/0001-arm64-dts-clockworkpi-a06-dts.patch"                    # DTS
   patch -Np1 -i "${srcdir}/0002-mfd-axp20x-add-clockworkpi-a06-power-support.patch"     # Battery/Charger
   patch -Np1 -i "${srcdir}/0004-gpu-drm-panel-add-cwd686-driver.patch"                  # LCD
   patch -Np1 -i "${srcdir}/0005-video-backlight-add-ocp8178-driver.patch"               # Backlight
-  patch -Np1 -i "${srcdir}/0006-fix-rockchip-mipi-dsi-display-init-timeouts.patch"      # Fix display suspend/resume
 
   # Yatli
   # patch -Np1 -i "${srcdir}/0026-fix-hibernate-resume-pd_gpu.patch"                      # Fix hibernate resume infinite loop
