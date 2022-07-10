@@ -1,6 +1,14 @@
 --- a/drivers/spi/spidev.c
 +++ b/drivers/spi/spidev.c
-@@ -696,6 +696,7 @@ static const struct of_device_id spidev_
+@@ -689,6 +689,7 @@ static const struct spi_device_id spidev
+ 	{ .name = "m53cpld" },
+ 	{ .name = "spi-petra" },
+ 	{ .name = "spi-authenta" },
++	{ .name = "spi-rockchip" },
+ 	{},
+ };
+ MODULE_DEVICE_TABLE(spi, spidev_spi_ids);
+@@ -703,6 +704,7 @@ static const struct of_device_id spidev_
  	{ .compatible = "menlo,m53cpld" },
  	{ .compatible = "cisco,spi-petra" },
  	{ .compatible = "micron,spi-authenta" },
