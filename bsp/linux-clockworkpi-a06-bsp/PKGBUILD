@@ -16,27 +16,15 @@ makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'git' 'dtc' 'cpio')
 options=('!strip')
 groups=('clockworkpi-a06')
 source=("https://github.com/rockchip-linux/kernel/archive/refs/heads/${_srcname}.zip"
-        '0001-net-smsc95xx-Allow-mac-address-to-be-set-as-a-parame.patch'
-        '0023-drm-rockchip-support-gamma-control-on-RK3399.patch' # From list: https://patchwork.kernel.org/project/linux-arm-kernel/cover/20211019215843.42718-1-sigmaris@gmail.com/
         '0001-arm64-dts-clockworkpi-a06-dts.patch' # Potentially upstreamable, needs cleanup
         '0002-mfd-axp20x-add-clockworkpi-a06-power-support.patch' # Looks potentially incorrect. Probably not upstreamable
         '0004-gpu-drm-panel-add-cwd686-driver.patch' # Potentially upstreamable, needs cleanup
         '0005-video-backlight-add-ocp8178-driver.patch' # Potentially upstreamable, needs cleanup
-        '0030-rockchip-suspend.patch'    # adapted from linux-pinebook-pro
-        '0031-gpio-pwm-fan.patch'    # https://lwn.net/Articles/830406/ slightly adapted
-        '0032-a06-battery-adjust.patch'
-        '0033-rockchip-spidev.patch' # adds rockchip,spidev to spidev driver OF list
         'config'
         'linux.preset'
         '60-linux.hook'
         '90-linux.hook')
 md5sums=('2dc1a74dbeab48cd6f0bcf233a8f0ee9'
-         '9e6b7f44db105fef525d715213dce7cf'
-         'e2f08e3bc6d1b36e7000233abab1bfc7'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
          'SKIP'
          'SKIP'
          'SKIP'
@@ -57,7 +45,8 @@ prepare() {
 
   # Yatli
 # patch -Np1 -i "${srcdir}/0032-a06-battery-adjust.patch"
-  patch -Np1 -i "${srcdir}/0099-makefile-surpress-warnings.patch"                       # Surpress warnings for 4.19.232
+  # Surpress warnings for 4.19.232
+  sed -i "s|interpret_warning(line\.decode|#interpret_warning(line\.decode|" scripts/gcc-wrapper.py
 
   cat "${srcdir}/config" > ./.config
 

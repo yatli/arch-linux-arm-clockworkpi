@@ -34,7 +34,7 @@ new file mode 100644
 index 000000000..6a0eabf92
 --- /dev/null
 +++ b/drivers/gpu/drm/panel/panel-cwd686.c
-@@ -0,0 +1,301 @@
+@@ -0,0 +1,294 @@
 +/*
 + * SPDX-License-Identifier: GPL-2.0+
 + * Copyright (c) 2021 Clockwork Tech LLC
@@ -61,7 +61,6 @@ index 000000000..6a0eabf92
 +	struct backlight_device *backlight;
 +	bool prepared;
 +	bool enabled;
-+	enum drm_panel_orientation orientation;
 +};
 +
 +static const struct drm_display_mode default_mode = {
@@ -226,14 +225,15 @@ index 000000000..6a0eabf92
 +	return 0;
 +}
 +
-+static int cwd686_get_modes(struct drm_panel *panel, struct drm_connector *connector)
++static int cwd686_get_modes(struct drm_panel *panel)
 +{
 +	struct cwd686 *ctx = panel_to_cwd686(panel);
 +	struct drm_display_mode *mode;
++	struct drm_connector *connector = panel->connector;
 +
-+	mode = drm_mode_duplicate(connector->dev, &default_mode);
++	mode = drm_mode_duplicate(panel->drm, &default_mode);
 +	if (!mode) {
-+		dev_err(panel->dev, "bad mode or failed to add mode\n");
++		dev_err(ctx->dev, "bad mode or failed to add mode\n");
 +		return -EINVAL;
 +	}
 +	drm_mode_set_name(mode);
@@ -241,9 +241,6 @@ index 000000000..6a0eabf92
 +
 +	connector->display_info.width_mm = mode->width_mm;
 +	connector->display_info.height_mm = mode->height_mm;
-+
-+	/* set up connector's "panel orientation" property */
-+	drm_connector_set_panel_orientation(connector, ctx->orientation);
 +
 +	drm_mode_probed_add(connector, mode);
 +
@@ -288,13 +285,9 @@ index 000000000..6a0eabf92
 +		return PTR_ERR(ctx->backlight);
 +	}
 +
-+	ret = of_drm_get_panel_orientation(dev->of_node, &ctx->orientation);
-+	if (ret) {
-+		dev_err(dev, "%pOF: failed to get orientation %d\n", dev->of_node, ret);
-+		return ret;
-+	}
-+
-+	drm_panel_init(&ctx->panel, dev, &cwd686_drm_funcs, DRM_MODE_CONNECTOR_DSI);
++	drm_panel_init(&ctx->panel);
++  ctx->panel.dev = dev;
++  ctx->panel.funcs = &cwd686_drm_funcs;
 +
 +	drm_panel_add(&ctx->panel);
 +
