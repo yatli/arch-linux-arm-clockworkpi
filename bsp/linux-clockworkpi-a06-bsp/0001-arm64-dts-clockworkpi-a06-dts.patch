@@ -10,7 +10,7 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-evb-ind-lpddr4-android-avb.dtb
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts	2021-12-05 20:46:08.851233995 -0600
-@@ -0,0 +1,989 @@
+@@ -0,0 +1,991 @@
 +/*
 + * SPDX-License-Identifier: (GPL-2.0+ or MIT)
 + * Copyright (c) 2017 Fuzhou Rockchip Electronics Co., Ltd.
@@ -33,7 +33,7 @@
 +	compatible = "clockwork,devterm-a06", "rockchip,rk3399";
 +
 +	chosen {
-+		stdout-path = "serial2:1500000n8";
++		stdout-path = "serial2:115200n8";
 +	};
 +
 +	aliases {
@@ -259,11 +259,11 @@
 +	status = "okay";
 +};
 +
-+&vpu {
-+	status = "okay";
-+	/* 0 means ion, 1 means drm */
-+	//allocator = <0>;
-+};
++//  &vpu {
++//  	status = "okay";
++//  	/* 0 means ion, 1 means drm */
++//  	//allocator = <0>;
++//  };
 +
 +&gpu {
 +	status = "okay";
@@ -282,13 +282,13 @@
 +	status = "disable";
 +};
 +
-+&mipi_in_vopb {
-+	status = "disable";
-+};
++//   &mipi_in_vopb {
++//   	status = "disable";
++//   };
 +
-+&mipi_in_vopl {
-+	status = "okay";
-+};
++//   &mipi_in_vopl {
++//   	status = "okay";
++//   };
 +
 +&hdmi {
 +	/* remove the hdmi_i2c_xfer */
@@ -301,36 +301,26 @@
 +	rockchip,defaultmode = <16>; /* CEA 1920x1080@60Hz */
 +};
 +
-+&mipi_dsi {
++&dsi {
 +	status = "okay";
-+
-+	ports {
-+		mipi_out: port@1 {
-+			reg = <1>;
-+			#address-cells = <1>;
-+			#size-cells = <0>;
-+			mipi_dsi_out: endpoint {
-+				remote-endpoint = <&panel_in>;
-+			};
-+		};
-+	};
 +
 +	dsi_panel: panel {
 +		compatible = "cw,cwd686";
 +		reg = <0>;
 +		backlight = <&ocp8178_backlight>;
-+		reset-gpios = <&gpio2 RK_PD4 GPIO_ACTIVE_HIGH>;
 +		rotation = <90>;
 +		dsi,lanes = <4>;
-+		pinctrl-names = "default";
-+		pinctrl-0 = <&panel_reset>;
-+		status = "okay";
 +
-+		port {
-+			panel_in: endpoint {
-+				remote-endpoint = <&mipi_dsi_out>;
-+			};
-+		};
++		status = "okay";
++    power_ctr: power_ctr {
++      rockchip,debug = <1>;
++      lcd_rst: lcd-rst {
++        gpios = <&gpio2 RK_PD4 GPIO_ACTIVE_HIGH>;
++        pinctrl-names = "default";
++        pinctrl-0 = <&panel_reset>;
++        rockchip,delay = <10>;
++      };
++    };
 +	};
 +
 +};
@@ -370,7 +360,7 @@
 +		compatible = "rockchip,rk808";
 +		reg = <0x1b>;
 +		interrupt-parent = <&gpio1>;
-+		interrupts = <21 IRQ_TYPE_LEVEL_LOW>;
++		interrupts = <21 IRQ_TYPE_LEVEL_HIGH>;
 +		#clock-cells = <1>;
 +		clock-output-names = "xin32k", "rk808-clkout2";
 +		pinctrl-names = "default";
@@ -755,7 +745,7 @@
 +	rockchip,i2s-broken-burst-len;
 +	rockchip,playback-channels = <8>;
 +	rockchip,capture-channels = <8>;
-+	pinctrl-0 = <&i2s0_2ch_bus>;
++	pinctrl-0 = <&i2s0_8ch_bus>;
 +	status = "okay";
 +};
 +
@@ -832,16 +822,20 @@
 +	status = "okay";
 +};
 +
++/* phy1 not connected
 +&tcphy1 {
 +	status = "okay";
 +};
++*/
 +
 +&u2phy0 {
 +	status = "okay";
 +
++  /*
 +	u2phy0_otg: otg-port {
 +		status = "okay";
 +	};
++  */
 +
 +	u2phy0_host: host-port {
 +		phy-supply = <&usb3_vbus>;
@@ -849,6 +843,7 @@
 +	};
 +};
 +
++/* PHY1 is not connected
 +&u2phy1 {
 +	status = "okay";
 +
@@ -861,23 +856,28 @@
 +		status = "okay";
 +	};
 +};
++*/
 +
++// rockchip,rk3399-dwc3
 +&usbdrd3_0 {
 +	status = "okay";
 +};
 +
++&usbdrd_dwc3_0 {
++  status = "okay";
++  dr_mode = "host";
++};
++
++/* phy1 not connected
 +&usbdrd3_1 {
 +	status = "okay";
 +};
 +
-+&usbdrd_dwc3_0 {
-+	status = "okay";
-+};
-+
 +&usbdrd_dwc3_1 {
-+	status = "okay";
-+	dr_mode = "host";
++  status = "okay";
++  dr_mode = "host";
 +};
++*/
 +
 +&usb_host0_ehci {
 +	status = "okay";
@@ -887,6 +887,7 @@
 +	status = "okay";
 +};
 +
++/* host1 not connected
 +&usb_host1_ehci {
 +	status = "okay";
 +};
@@ -894,6 +895,7 @@
 +&usb_host1_ohci {
 +	status = "okay";
 +};
++*/
 +
 +&pinctrl {
 +
@@ -1000,112 +1002,3 @@
 +	};
 +};
 +
-diff -u b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
---- b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
-+++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
-@@ -20,7 +20,7 @@
- 	compatible = "clockwork,devterm-a06", "rockchip,rk3399";
- 
- 	chosen {
--		stdout-path = "serial2:1500000n8";
-+		stdout-path = "serial2:115200n8";
- 	};
- 
- 	aliases {
-@@ -357,7 +357,7 @@
- 		compatible = "rockchip,rk808";
- 		reg = <0x1b>;
- 		interrupt-parent = <&gpio1>;
--		interrupts = <21 IRQ_TYPE_LEVEL_LOW>;
-+		interrupts = <21 IRQ_TYPE_LEVEL_HIGH>;
- 		#clock-cells = <1>;
- 		clock-output-names = "xin32k", "rk808-clkout2";
- 		pinctrl-names = "default";
-@@ -742,7 +742,7 @@
- 	rockchip,i2s-broken-burst-len;
- 	rockchip,playback-channels = <8>;
- 	rockchip,capture-channels = <8>;
--	pinctrl-0 = <&i2s0_2ch_bus>;
-+	pinctrl-0 = <&i2s0_8ch_bus>;
- 	status = "okay";
- };
- 
-@@ -828,16 +828,20 @@
- 	status = "okay";
- };
- 
-+/* phy1 not connected
- &tcphy1 {
- 	status = "okay";
- };
-+*/
- 
- &u2phy0 {
- 	status = "okay";
- 
-+  /*
- 	u2phy0_otg: otg-port {
- 		status = "okay";
- 	};
-+  */
- 
- 	u2phy0_host: host-port {
- 		phy-supply = <&usb3_vbus>;
-@@ -845,6 +849,7 @@
- 	};
- };
- 
-+/* PHY1 is not connected
- &u2phy1 {
- 	status = "okay";
- 
-@@ -857,23 +862,28 @@
- 		status = "okay";
- 	};
- };
-+*/
- 
-+// rockchip,rk3399-dwc3
- &usbdrd3_0 {
- 	status = "okay";
- };
- 
--&usbdrd3_1 {
--	status = "okay";
-+&usbdrd_dwc3_0 {
-+  status = "okay";
-+  dr_mode = "host";
- };
- 
--&usbdrd_dwc3_0 {
-+/* phy1 not connected
-+&usbdrd3_1 {
- 	status = "okay";
- };
- 
- &usbdrd_dwc3_1 {
--	status = "okay";
--	dr_mode = "host";
-+  status = "okay";
-+  dr_mode = "host";
- };
-+*/
- 
- &usb_host0_ehci {
- 	status = "okay";
-@@ -883,6 +893,7 @@
- 	status = "okay";
- };
- 
-+/* host1 not connected
- &usb_host1_ehci {
- 	status = "okay";
- };
-@@ -890,6 +901,7 @@
- &usb_host1_ohci {
- 	status = "okay";
- };
-+*/
- 
- &pinctrl {
- 
