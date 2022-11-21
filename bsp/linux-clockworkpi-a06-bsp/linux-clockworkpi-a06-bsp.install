@@ -3,7 +3,7 @@ post_install() {
   if grep -Fxq "MODULES=()" "/etc/mkinitcpio.conf"; then
     echo 'Updating mkinitcpio.conf with required modules'
     sed -i 's/MODULES=()/MODULES=(rtc_rk808 rockchipdrm panel_cwd686 ocp8178_bl)/g' /etc/mkinitcpio.conf
-    mkinitcpio -p linux-clockworkpi-a06
+    mkinitcpio -p linux-clockworkpi-a06-bsp
   else
     echo 'Could not automatically update /etc/mkinitcpio.conf with required modules'
     echo 'Please add the following modules to MODULES:'
