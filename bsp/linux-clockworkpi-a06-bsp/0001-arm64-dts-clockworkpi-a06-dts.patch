@@ -172,13 +172,13 @@
 +	};
 +
 +	dw_hdmi_audio: dw-hdmi-audio {
-+		status = "disable";
++		status = "disabled";
 +		compatible = "rockchip,dw-hdmi-audio";
 +		#sound-dai-cells = <0>;
 +	};
 +
 +	hdmi_sound: hdmi-sound {
-+		status = "disable";
++		status = "disabled";
 +	};
 +
 +	sdio_pwrseq: sdio-pwrseq {
@@ -330,11 +330,11 @@
 +
 +&hdmi_in_vopb {
 +	// status = "okay";
-+	status = "disable";
++	status = "disabled";
 +};
 +
 +&hdmi_in_vopl {
-+	status = "disable";
++	status = "disabled";
 +};
 +
 +//   &mipi_in_vopb {
@@ -351,7 +351,7 @@
 +	#address-cells = <1>;
 +	#size-cells = <0>;
 +	#sound-dai-cells = <0>;
-+	status = "okay";
++	status = "disabled";
 +	ddc-i2c-bus = <&i2c3>;
 +	rockchip,defaultmode = <16>; /* CEA 1920x1080@60Hz */
 +};
@@ -1118,7 +1118,7 @@
 +
 +	route {
 +		route_hdmi: route-hdmi {
-+			status = "disable";
++			status = "disabled";
 +			connect = <&vopb_out_hdmi>;
 +		};
 +
