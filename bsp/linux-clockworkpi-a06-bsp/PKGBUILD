@@ -21,11 +21,13 @@ source=("https://github.com/rockchip-linux/kernel/archive/refs/heads/${_srcname}
         '0003-brcm4345c-driver-support.patch' # https://patchwork.kernel.org/project/linux-arm-kernel/cover/20190823103139.17687-1-megous@megous.com/
         '0004-gpu-drm-panel-add-cwd686-driver.patch' # Potentially upstreamable, needs cleanup
         '0005-video-backlight-add-ocp8178-driver.patch' # Potentially upstreamable, needs cleanup
+        '0006-rockchip-thermal-expose-hwmon.patch' # https://lore.kernel.org/linux-pm/20191213173119.GA4231@roeck-us.net/T/
         'config'
         'linux.preset'
         '60-linux.hook'
         '90-linux.hook')
 md5sums=('2dc1a74dbeab48cd6f0bcf233a8f0ee9'
+         'SKIP'
          'SKIP'
          'SKIP'
          'SKIP'
@@ -48,6 +50,7 @@ prepare() {
   # Yatli
 # patch -Np1 -i "${srcdir}/0032-a06-battery-adjust.patch"
   patch -Np1 -i "${srcdir}/0003-brcm4345c-driver-support.patch"     # BT/WiFi
+# patch -Np1 -i "${srcdir}/0006-rockchip-thermal-expose-hwmon.patch"  # Expose hwmon (should not be needed, but THERMAL_HWMON is not working)
   # Surpress warnings for 4.19.232
   sed -i "s|interpret_warning(line\.decode|#interpret_warning(line\.decode|" scripts/gcc-wrapper.py
 

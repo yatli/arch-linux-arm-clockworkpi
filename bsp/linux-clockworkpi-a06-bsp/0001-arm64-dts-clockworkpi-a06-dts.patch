@@ -234,7 +234,7 @@
 +		};
 +	};
 +
-+	speaker_amp: speaker-amplifier {
++	speaker_amp: analog-amplifier {
 +		compatible = "simple-audio-amplifier";
 +		pinctrl-names = "default";
 +		pinctrl-0 = <&pa_en>;
