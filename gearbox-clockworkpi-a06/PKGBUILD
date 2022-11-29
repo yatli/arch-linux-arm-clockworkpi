@@ -11,7 +11,7 @@ license=('LGPLv2')
 depends=('python>=3')
 groups=('clockworkpi-a06')
 source=("https://raw.githubusercontent.com/clockworkpi/DevTerm/main/Code/A06/devterm-a06-gearbox")
-md5sums=('775bb3e84708de6bacdf7d35f5c133bf')
+md5sums=('2d991717c22be87245d47e7c86183a2e')
 
 package() {
     install -Dm755 "devterm-a06-gearbox" "$pkgdir/usr/bin/$pkgname"
