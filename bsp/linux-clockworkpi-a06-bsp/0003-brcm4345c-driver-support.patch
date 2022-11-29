@@ -1,0 +1,85 @@
+diff --git a/Documentation/devicetree/bindings/net/broadcom-bluetooth.txt b/Documentation/devicetree/bindings/net/broadcom-bluetooth.txt
+index c26f4e11037c..4fa00e2eafcf 100644
+--- a/Documentation/devicetree/bindings/net/broadcom-bluetooth.txt
++++ b/Documentation/devicetree/bindings/net/broadcom-bluetooth.txt
+@@ -13,6 +13,7 @@  Required properties:
+    * "brcm,bcm20702a1"
+    * "brcm,bcm4330-bt"
+    * "brcm,bcm43438-bt"
++   * "brcm,bcm4345c5"
+ 
+ Optional properties:
+ 
+diff --git a/drivers/bluetooth/btbcm.c b/drivers/bluetooth/btbcm.c
+index 124ef0a3e1dd..2d2e6d862068 100644
+--- a/drivers/bluetooth/btbcm.c
++++ b/drivers/bluetooth/btbcm.c
+@@ -35,6 +35,7 @@ 
+ #define BDADDR_BCM20702A0 (&(bdaddr_t) {{0x00, 0xa0, 0x02, 0x70, 0x20, 0x00}})
+ #define BDADDR_BCM4324B3 (&(bdaddr_t) {{0x00, 0x00, 0x00, 0xb3, 0x24, 0x43}})
+ #define BDADDR_BCM4330B1 (&(bdaddr_t) {{0x00, 0x00, 0x00, 0xb1, 0x30, 0x43}})
++#define BDADDR_BCM4345C5 (&(bdaddr_t) {{0xac, 0x1f, 0x00, 0xc5, 0x45, 0x43}})
+ 
+ int btbcm_check_bdaddr(struct hci_dev *hdev)
+ {
+@@ -72,6 +73,7 @@  int btbcm_check_bdaddr(struct hci_dev *hdev)
+ 	 */
+ 	if (!bacmp(&bda->bdaddr, BDADDR_BCM20702A0) ||
+ 	    !bacmp(&bda->bdaddr, BDADDR_BCM4324B3) ||
++	    !bacmp(&bda->bdaddr, BDADDR_BCM4345C5) ||
+ 	    !bacmp(&bda->bdaddr, BDADDR_BCM4330B1)) {
+ 		bt_dev_info(hdev, "BCM: Using default device address (%pMR)",
+ 			    &bda->bdaddr);
+@@ -332,6 +334,7 @@  static const struct bcm_subver_table bcm_uart_subver_table[] = {
+ 	{ 0x2122, "BCM4343A0"	},	/* 001.001.034 */
+ 	{ 0x2209, "BCM43430A1"  },	/* 001.002.009 */
+ 	{ 0x6119, "BCM4345C0"	},	/* 003.001.025 */
++	{ 0x6606, "BCM4345C5"	},	/* 003.006.006 */
+ 	{ 0x230f, "BCM4356A2"	},	/* 001.003.015 */
+ 	{ }
+ };
+diff --git a/drivers/bluetooth/hci_bcm.c b/drivers/bluetooth/hci_bcm.c
+index 4d9de20bab7b..95c312ae94cf 100644
+--- a/drivers/bluetooth/hci_bcm.c
++++ b/drivers/bluetooth/hci_bcm.c
+@@ -1419,6 +1419,7 @@  static void bcm_serdev_remove(struct serdev_device *serdev)
+ #ifdef CONFIG_OF
+ static const struct of_device_id bcm_bluetooth_of_match[] = {
+ 	{ .compatible = "brcm,bcm43438-bt" },
++	{ .compatible = "brcm,bcm4345c5" },
+ 	{ },
+ };
+ MODULE_DEVICE_TABLE(of, bcm_bluetooth_of_match);
+diff --git a/drivers/bluetooth/hci_bcm.c b/drivers/bluetooth/hci_bcm.c
+index 95c312ae94cf..7646636f2d18 100644
+--- a/drivers/bluetooth/hci_bcm.c
++++ b/drivers/bluetooth/hci_bcm.c
+@@ -238,6 +238,8 @@  static int bcm_gpio_set_power(struct bcm_device *dev, bool powered)
+ 	if (!powered && !IS_ERR(dev->clk) && dev->clk_enabled)
+ 		clk_disable_unprepare(dev->clk);
+ 
++	/* wait for device to power on and come out of reset */
++	usleep_range(100000, 120000);
+ 	dev->clk_enabled = powered;
+ 
+ 	return 0;
+--- a/drivers/net/wireless/broadcom/brcm80211/brcmfmac/sdio.c
++++ b/drivers/net/wireless/broadcom/brcm80211/brcmfmac/sdio.c
+@@ -621,6 +621,7 @@ BRCMF_FW_DEF(43430A0, "brcmfmac43430a0-s
+ /* Note the names are not postfixed with a1 for backward compatibility */
+ BRCMF_FW_DEF(43430A1, "brcmfmac43430-sdio");
+ BRCMF_FW_DEF(43455, "brcmfmac43455-sdio");
++BRCMF_FW_DEF(43456, "brcmfmac43456-sdio");
+ BRCMF_FW_DEF(4354, "brcmfmac4354-sdio");
+ BRCMF_FW_DEF(4356, "brcmfmac4356-sdio");
+ BRCMF_FW_DEF(4373, "brcmfmac4373-sdio");
+@@ -640,7 +641,8 @@ static const struct brcmf_firmware_mappi
+ 	BRCMF_FW_ENTRY(BRCM_CC_4339_CHIP_ID, 0xFFFFFFFF, 4339),
+ 	BRCMF_FW_ENTRY(BRCM_CC_43430_CHIP_ID, 0x00000001, 43430A0),
+ 	BRCMF_FW_ENTRY(BRCM_CC_43430_CHIP_ID, 0xFFFFFFFE, 43430A1),
+-	BRCMF_FW_ENTRY(BRCM_CC_4345_CHIP_ID, 0xFFFFFFC0, 43455),
++  BRCMF_FW_ENTRY(BRCM_CC_4345_CHIP_ID, 0x00000200, 43456),
++  BRCMF_FW_ENTRY(BRCM_CC_4345_CHIP_ID, 0xFFFFFDC0, 43455),
+ 	BRCMF_FW_ENTRY(BRCM_CC_4354_CHIP_ID, 0xFFFFFFFF, 4354),
+ 	BRCMF_FW_ENTRY(BRCM_CC_4356_CHIP_ID, 0xFFFFFFFF, 4356),
+ 	BRCMF_FW_ENTRY(CY_CC_4373_CHIP_ID, 0xFFFFFFFF, 4373)
