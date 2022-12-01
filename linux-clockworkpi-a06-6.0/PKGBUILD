@@ -26,7 +26,6 @@ source=("http://www.kernel.org/pub/linux/kernel/v6.x/${_srcname}.tar.xz"
         '0030-rockchip-suspend.patch'    # adapted from linux-pinebook-pro
         '0031-gpio-pwm-fan.patch'    # https://lwn.net/Articles/830406/ slightly adapted
         '0032-a06-battery-adjust.patch'
-        '0033-rockchip-spidev.patch' # adds rockchip,spidev to spidev driver OF list
         'config'
         'linux.preset'
         '60-linux.hook'
@@ -39,7 +38,6 @@ md5sums=('SKIP'
          'f4895fa5b399dec785102f3a4a091175'
          '68729a165d157c29fa451b86b01785a9'
          '3203d018422505068fc22b909df871aa'
-         'SKIP'
          'SKIP'
          'SKIP'
          'SKIP'
@@ -67,10 +65,10 @@ prepare() {
   patch -Np1 -i "${srcdir}/0005-video-backlight-add-ocp8178-driver.patch"               # Backlight
 
   # Yatli
-  # patch -Np1 -i "${srcdir}/0030-rockchip-suspend.patch"
+  patch -Np1 -i "${srcdir}/0030-rockchip-suspend.patch"
   patch -Np1 -i "${srcdir}/0031-gpio-pwm-fan.patch"
-  patch -Np1 -i "${srcdir}/0032-a06-battery-adjust.patch"
-# patch -Np1 -i "${srcdir}/0033-rockchip-spidev.patch"
+# CAUTION: battery adjust lowers minimum voltage to 2.9v
+# patch -Np1 -i "${srcdir}/0032-a06-battery-adjust.patch"
 
   cat "${srcdir}/config" > ./.config
 
