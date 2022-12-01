@@ -40,95 +40,6 @@
 +			)
 +		>;
 +	};
---- a/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
-+++ b/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
-@@ -19,9 +19,15 @@ / {
- 	compatible = "pine64,pinebook-pro", "rockchip,rk3399";
- 
- 	chosen {
-+		bootargs = "earlycon=uart8250,mmio32,0xff1a0000";
- 		stdout-path = "serial2:1500000n8";
- 	};
- 
-+	memory {
-+		device_type = "memory";
-+		reg = <0x0 0x00200000 0x0 0xf7e00000>;
-+	};
-+
- 	backlight: edp-backlight {
- 		compatible = "pwm-backlight";
- 		power-supply = <&vcc_12v>;
-@@ -104,7 +110,8 @@ green_led: led-0 {
- 			default-state = "on";
- 			function = LED_FUNCTION_POWER;
- 			gpios = <&gpio0 RK_PB3 GPIO_ACTIVE_HIGH>;
--			label = "green:power";
-+			label = "green:disk-activity";
-+			linux,default-trigger = "mmc2-inverted";
- 		};
- 
- 		red_led: led-1 {
-@@ -132,6 +139,12 @@ sdio_pwrseq: sdio-pwrseq {
- 		reset-gpios = <&gpio0 RK_PB2 GPIO_ACTIVE_LOW>;
- 	};
- 
-+	/* first 128k(0xff8d0000~0xff8f0000) for ddr and ATF */
-+	sram@ff8d0000 {
-+		compatible = "mmio-sram";
-+		reg = <0x0 0xff8d0000 0x0 0x20000>; /* 128k */
-+	};
-+
- 	/* Audio components */
- 	es8316-sound {
- 		compatible = "simple-audio-card";
-@@ -715,6 +736,9 @@ connector {
- 				<PDO_FIXED(5000, 1400, PDO_FIXED_USB_COMM)>;
- 			try-power-role = "sink";
- 
-+			extcon-cables = <1 2 5 6 9 10 12 44>;
-+			typec-altmodes = <0xff01 1 0x001c0000 1>;
-+
- 			ports {
- 				#address-cells = <1>;
- 				#size-cells = <0>;
-@@ -930,6 +954,29 @@ &pwm2 {
- 	status = "okay";
- };
- 
-+&rockchip_suspend {
-+	status = "okay";
-+	rockchip,sleep-debug-en = <1>;
-+	rockchip,sleep-mode-config = <
-+		(0
-+		| RKPM_SLP_ARMPD
-+		| RKPM_SLP_PERILPPD
-+		| RKPM_SLP_DDR_RET
-+		| RKPM_SLP_PLLPD
-+		| RKPM_SLP_CENTER_PD
-+		| RKPM_SLP_AP_PWROFF
-+		)
-+	>;
-+	rockchip,pwm-regulator-config = <
-+		(0
-+		| PWM2_REGULATOR_EN
-+		)
-+	>;
-+	rockchip,power-ctrl =
-+		<&gpio1 RK_PC1 GPIO_ACTIVE_HIGH>,
-+		<&gpio1 RK_PB6 GPIO_ACTIVE_HIGH>;
-+};
-+
- &saradc {
- 	vref-supply = <&vcca1v8_s3>;
- 	status = "okay";
-@@ -982,6 +1029,7 @@ spiflash: flash@0 {
- };
- 
- &tcphy0 {
-+	extcon = <&fusb0>;
- 	status = "okay";
- };
- 
 --- a/arch/arm64/boot/dts/rockchip/rk3399.dtsi
 +++ b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
 @@ -9,6 +9,7 @@
@@ -549,7 +460,7 @@
 +obj-$(CONFIG_ROCKCHIP_SUSPEND_MODE) += rockchip_pm_config.o
 --- /dev/null
 +++ b/drivers/soc/rockchip/rockchip_pm_config.c
-@@ -0,0 +1,212 @@
+@@ -0,0 +1,122 @@
 +/*
 + * Rockchip Generic power configuration support.
 + *
@@ -576,90 +487,6 @@
 +	{ .compatible = "rockchip,pm-rk3399",},
 +	{ },
 +};
-+
-+#define MAX_PWRKEY_NUMS		20
-+#define MAX_NUM_KEYS		60
-+
-+struct rkxx_remote_key_table {
-+	int scancode;
-+	int keycode;
-+};
-+
-+static int parse_ir_pwrkeys(unsigned int *pwrkey, int size, int *nkey)
-+{
-+	struct device_node *node;
-+	struct device_node *child_node;
-+	struct rkxx_remote_key_table key_table[MAX_NUM_KEYS];
-+	int i;
-+	int len = 0, nbuttons;
-+	int num = 0;
-+	u32 usercode, scancode;
-+
-+	for_each_node_by_name(node, "pwm") {
-+		for_each_child_of_node(node, child_node) {
-+			if (of_property_read_u32(child_node,
-+						 "rockchip,usercode",
-+						 &usercode))
-+				break;
-+
-+			if (of_get_property(child_node,
-+					    "rockchip,key_table",
-+					    &len) == NULL ||
-+			    len <= 0)
-+				break;
-+
-+			len = len < sizeof(key_table) ? len : sizeof(key_table);
-+			len /= sizeof(u32);
-+			if (of_property_read_u32_array(child_node,
-+						       "rockchip,key_table",
-+						       (u32 *)key_table,
-+						       len))
-+				break;
-+
-+			nbuttons = len / 2;
-+			for (i = 0; i < nbuttons && num < size; ++i) {
-+				if (key_table[i].keycode == KEY_POWER) {
-+					scancode = key_table[i].scancode;
-+					pr_debug("usercode=%x, key=%x\n",
-+						 usercode, scancode);
-+					pwrkey[num] = (usercode & 0xffff) << 16;
-+					pwrkey[num] |= (scancode & 0xff) << 8;
-+					++num;
-+				}
-+			}
-+		}
-+	}
-+
-+	*nkey = num;
-+
-+	return num ? 0 : -1;
-+}
-+
-+static void rockchip_pm_virt_pwroff_prepare(void)
-+{
-+	int error;
-+	int i, nkey;
-+	u32 power_key[MAX_PWRKEY_NUMS];
-+
-+	if ((parse_ir_pwrkeys(power_key, ARRAY_SIZE(power_key), &nkey))) {
-+		pr_err("Parse ir powerkey code failed!\n");
-+		return;
-+	}
-+
-+	for (i = 0; i < nkey; ++i)
-+		sip_smc_set_suspend_mode(VIRTUAL_POWEROFF, 1, power_key[i]);
-+
-+	regulator_suspend_prepare(PM_SUSPEND_MEM);
-+
-+	error = freeze_secondary_cpus(0);
-+	if (error) {
-+		pr_err("Disable nonboot cpus failed!\n");
-+		return;
-+	}
-+
-+	sip_smc_set_suspend_mode(VIRTUAL_POWEROFF, 0, 1);
-+	sip_smc_virtual_poweroff();
-+}
 +
 +static int __init pm_config_init(struct platform_device *pdev)
 +{
@@ -740,12 +567,6 @@
 +		sip_smc_set_suspend_mode(APIOS_SUSPEND_CONFIG,
 +					 apios_suspend,
 +					 0);
-+
-+	if (!of_property_read_u32_array(node,
-+					"rockchip,virtual-poweroff",
-+					&virtual_poweroff_en, 1) &&
-+	    virtual_poweroff_en)
-+		pm_power_off_prepare = rockchip_pm_virt_pwroff_prepare;
 +
 +	return 0;
 +}
