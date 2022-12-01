@@ -20,14 +20,19 @@ install=${pkgname}.install
 groups=('clockworkpi-a06')
 source=("https://ftp.denx.de/pub/u-boot/u-boot-${pkgver/rc/-rc}.tar.bz2"
         "https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git/snapshot/trusted-firmware-a-$_tfaver.tar.gz"
-        "0001-uboot-clockworkpi-a06.patch")
+        "https://github.com/rockchip-linux/rkbin/raw/master/bin/rk33/rk3399_bl31_v1.35.elf"
+        "0001-uboot-clockworkpi-a06.patch"
+        "0002-pgwipeout-mmc-sdhci-sdma-spl.patch")
 sha256sums=('SKIP'
+            'SKIP'
+            'SKIP'
             'SKIP'
             'SKIP')
 
 prepare() {
   cd u-boot-${pkgver/rc/-rc}
   patch -Np1 -i "${srcdir}/0001-uboot-clockworkpi-a06.patch"
+  patch -Np1 -i "${srcdir}/0002-pgwipeout-mmc-sdhci-sdma-spl.patch"
 }
 
 build() {
@@ -47,17 +52,19 @@ build() {
 
   unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
 
-  cd ${srcdir}/trusted-firmware-a-$_tfaver
-
-  echo -e "\nBuilding TF-A for ClockworkPI A06...\n"
+# cd ${srcdir}/trusted-firmware-a-$_tfaver
+# echo -e "\nBuilding TF-A for ClockworkPI A06...\n"
 
 # DEBUG version
 #  make PLAT=rk3399 LOG_LEVEL=50 DEBUG=1 V=1
 #  cp -v build/rk3399/debug/bl31/bl31.elf ${srcdir}/u-boot-${pkgver/rc/-rc}/bl31.elf
 
 # RELEASE version
-  make PLAT=rk3399
-  cp -v build/rk3399/release/bl31/bl31.elf ${srcdir}/u-boot-${pkgver/rc/-rc}/bl31.elf
+#  make PLAT=rk3399
+#  cp -v build/rk3399/release/bl31/bl31.elf ${srcdir}/u-boot-${pkgver/rc/-rc}/bl31.elf
+
+# RKBIN version
+  cp -v ${srcdir}/rk3399_bl31_v1.35.elf ${srcdir}/u-boot-${pkgver/rc/-rc}/bl31.elf
 
   cd ${srcdir}/u-boot-${pkgver/rc/-rc}
 
@@ -66,6 +73,7 @@ build() {
 
   update_config 'CONFIG_IDENT_STRING' '" Arch Linux ARM"'
   update_config 'CONFIG_OF_LIBFDT_OVERLAY' 'y'
+  update_config 'CONFIG_SPL_MMC_SDHCI_SDMA' 'y'
 # make EXTRAVERSION=-${pkgrel}
   make EXTRAVERSION=-$(date -R | cut -c18-25)
 }

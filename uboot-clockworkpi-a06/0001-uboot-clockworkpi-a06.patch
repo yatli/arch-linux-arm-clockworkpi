@@ -23,7 +23,7 @@ index 00000000..495573e0
 +
 +/ {
 +	chosen {
-+		stdout-path = "serial2:1500000n8";
++		stdout-path = "serial2:115200n8";
 +		u-boot,spl-boot-order = "same-as-spl", &sdhci, &sdmmc;
 +	};
 +};
@@ -63,7 +63,7 @@ index 00000000..8357d05f
 +	compatible = "clockwork,devterm-a06", "rockchip,rk3399";
 +
 +	chosen {
-+		stdout-path = "serial2:1500000n8";
++		stdout-path = "serial2:115200n8";
 +	};
 +
 +	vdd_center: vdd-center {
@@ -214,7 +214,7 @@ new file mode 100644
 index 00000000..826139c1
 --- /dev/null
 +++ b/configs/clockworkpi-a06-rk3399_defconfig
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,55 @@
 +CONFIG_ARM=y
 +CONFIG_ARCH_ROCKCHIP=y
 +CONFIG_SYS_TEXT_BASE=0x00200000
@@ -254,7 +254,7 @@ index 00000000..826139c1
 +CONFIG_REGULATOR_RK8XX=y
 +CONFIG_RAM_RK3399_LPDDR4=y
 +CONFIG_RAM_ROCKCHIP_DEBUG=y
-+CONFIG_BAUDRATE=1500000
++CONFIG_BAUDRATE=115200
 +CONFIG_DEBUG_UART_SHIFT=2
 +CONFIG_SYSRESET=y
 +CONFIG_USB=y
@@ -269,3 +269,4 @@ index 00000000..826139c1
 +CONFIG_DISPLAY_ROCKCHIP_HDMI=y
 +CONFIG_SPL_TINY_MEMSET=y
 +CONFIG_ERRNO_STR=y
++CONFIG_SYS_LOAD_ADDR=0x800800
