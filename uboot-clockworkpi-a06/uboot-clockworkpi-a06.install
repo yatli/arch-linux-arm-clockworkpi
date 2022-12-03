@@ -1,8 +1,9 @@
 notice_uboot() {
   echo "New version of U-Boot firmware can be flashed to your microSD card (mmcblk1)"
   echo "or eMMC module (mmcblk2).  You can do that by running:"
-  echo "# dd if=/boot/idbloader.img of=/dev/mmcblkX seek=64 conv=notrunc,fsync"
-  echo "# dd if=/boot/u-boot.itb of=/dev/mmcblkX seek=16384 conv=notrunc,fsync"
+  echo "#   sudo dd if=/boot/idbloader.img of=/dev/mmcblkX seek=64 conv=notrunc,fsync"
+  echo "#   sudo dd if=/boot/uboot.img of=/dev/mmcblkX seek=16384 conv=notrunc,fsync"
+  echo "#   sudo dd if=/boot/trust.img of=/dev/mmcblkX seek=24576 conv=notrunc,fsync"
 }
 
 create_config() {
@@ -10,7 +11,7 @@ create_config() {
   echo "LABEL Arch ARM
 KERNEL /boot/Image
 FDT /boot/dtbs/rockchip/rk3399-clockworkpi-a06.dtb
-APPEND initrd=/boot/initramfs-linux.img console=ttyS2,115200 root=LABEL=ROOT_ARCH rw rootwait audit=0" \
+APPEND initrd=/boot/initramfs-linux.img console=ttyS2,1500000 root=LABEL=ROOT_ARCH rw rootwait audit=0" \
     > /boot/extlinux/extlinux.conf
 }
 
