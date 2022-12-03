@@ -9,8 +9,8 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-ficus.dtb
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-firefly.dtb
 --- /dev/null
-+++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts	2021-12-05 20:46:08.851233995 -0600
-@@ -0,0 +1,1097 @@
++++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
+@@ -0,0 +1,1102 @@
 +/*
 + * SPDX-License-Identifier: (GPL-2.0+ or MIT)
 + * Copyright (c) 2017 Fuzhou Rockchip Electronics Co., Ltd.
@@ -232,10 +232,12 @@
 +
 +	battery: battery@0 {
 +		compatible = "simple-battery";
-+		constant-charge-current-max-microamp = <2100000>;
-+		voltage-min-design-microvolt = <3300000>;
++   device-chemistry = "lithium-ion";
++		// constant-charge-current-max-microamp = <2100000>;
++		// voltage-min-design-microvolt = <2850000>;
 +		voltage-max-design-microvolt = <4200000>;
 +		re-charge-voltage-microvolt = <4000000>;
++   // charge-full-design-microamp-hours = <6700000>; // 2x3350mAh
 +	};
 +
 +	ocp8178_backlight: backlight@0 {
@@ -258,11 +260,12 @@
 +    pinctrl-0 = <&pwr_key_l>;
 +    pwr_key {
 +      label = "PWR_KEY_L";
-+      linux,code = <103>; // up
++      linux,code = <116>; // POWER
++      debounce-interval = <100>;
 +      wakeup-source;
 +      gpios = <&gpio0 RK_PA5 GPIO_ACTIVE_LOW>;
-+      interrupt-parent = <&gpio0>;
-+      interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
++      /*interrupt-parent = <&gpio0>;*/
++      /*interrupts = <5 IRQ_TYPE_EDGE_FALLING>;*/
 +    };
 +  };
 +};
@@ -1094,10 +1097,12 @@
 +    | RKPM_SLP_PERILPPD
 +    | RKPM_SLP_DDR_RET
 +    | RKPM_SLP_PLLPD
++    | RKPM_SLP_OSC_DIS
 +    | RKPM_SLP_CENTER_PD
 +    | RKPM_SLP_AP_PWROFF
 +		)
 +	>;
++  // experiment with RKPM_SLP_OSC_DIS
 +
 +	rockchip,pwm-regulator-config = <
 +		(0
