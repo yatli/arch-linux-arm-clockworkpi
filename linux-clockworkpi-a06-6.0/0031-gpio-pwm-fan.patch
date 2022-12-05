@@ -186,17 +186,3 @@
 +  - gpio
 +
 +additionalProperties: false
---- a/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
-+++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
-@@ -204,6 +204,11 @@
- 		pinctrl-0 = <&backlight_control>;
- 	};
- 
-+  fan: fan@0 {
-+    compatible = "pwm-gpio";
-+    gpio = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
-+    #pwm-cells = <2>;
-+  };
- };
- 
- &cpu_l0 {

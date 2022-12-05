@@ -10,7 +10,7 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-firefly.dtb
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
-@@ -0,0 +1,1102 @@
+@@ -0,0 +1,1120 @@
 +/*
 + * SPDX-License-Identifier: (GPL-2.0+ or MIT)
 + * Copyright (c) 2017 Fuzhou Rockchip Electronics Co., Ltd.
@@ -27,7 +27,7 @@
 +#include <dt-bindings/pwm/pwm.h>
 +#include <dt-bindings/usb/pd.h>
 +#include "rk3399.dtsi"
-+#include "rk3399-opp.dtsi"
++#include "rk3399-opp-clockworkpi-a06.dtsi"
 +
 +/ {
 +	model = "Clockworkpi A06";
@@ -1081,6 +1081,24 @@
 +
 +&dmc {
 +  status = "okay";
++  center-supply = <&vdd_center>;
++	rockchip,pd-idle-dis-freq-hz = <800000000>;
++	rockchip,sr-idle-dis-freq-hz = <800000000>;
++	rockchip,sr-mc-gate-idle-dis-freq-hz = <800000000>;
++
++	rockchip,pd-idle-ns = <160>;
++	rockchip,sr-idle-ns = <10240>;
++	rockchip,sr-mc-gate-idle-ns = <40960>;
++	rockchip,srpd-lite-idle-ns = <61440>;
++	rockchip,standby-idle-ns = <81920>;
++
++	rockchip,ddr3_odt_dis_freq = <666000000>;
++	rockchip,lpddr3_odt_dis_freq = <666000000>;
++	rockchip,lpddr4_odt_dis_freq = <666000000>;
++
++	rockchip,sr-mc-gate-idle-dis-freq-hz = <1000000000>;
++	rockchip,srpd-lite-idle-dis-freq-hz = <0>;
++	rockchip,standby-idle-dis-freq-hz = <800000000>;
 +};
 +
 +
@@ -1090,7 +1108,7 @@
 +
 +&rockchip_suspend {
 +	status = "okay";
-+	rockchip,sleep-debug-en = <1>;
++	rockchip,sleep-debug-en = <0>;
 +	rockchip,sleep-mode-config = <
 +		(0
 +		| RKPM_SLP_ARMPD
@@ -1112,4 +1130,166 @@
 +	rockchip,power-ctrl =
 +		<&gpio1 RK_PC1 GPIO_ACTIVE_HIGH>,
 +		<&gpio1 RK_PB6 GPIO_ACTIVE_HIGH>;
++};
+--- /dev/null
++++ b/arch/arm64/boot/dts/rockchip/rk3399-opp-clockworkpi-a06.dtsi
+@@ -0,0 +1,159 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Copyright (c) 2016-2017 Fuzhou Rockchip Electronics Co., Ltd
++ */
++
++/ {
++	cluster0_opp: opp-table-0 {
++		compatible = "operating-points-v2";
++		opp-shared;
++
++		opp00 {
++			opp-hz = /bits/ 64 <408000000>;
++      // <target min max>
++			opp-microvolt = <800000 800000 1250000>;
++			clock-latency-ns = <40000>;
++		};
++		opp01 {
++			opp-hz = /bits/ 64 <600000000>;
++			opp-microvolt = <825000 825000 1250000>;
++		};
++		opp02 {
++			opp-hz = /bits/ 64 <816000000>;
++			opp-microvolt = <850000 850000 1250000>;
++		};
++		opp03 {
++			opp-hz = /bits/ 64 <1008000000>;
++			opp-microvolt = <900000 900000 1250000>;
++		};
++		opp04 {
++			opp-hz = /bits/ 64 <1200000000>;
++			opp-microvolt = <975000 975000 1250000>;
++		};
++		opp05 {
++			opp-hz = /bits/ 64 <1416000000>;
++			opp-microvolt = <1100000 1100000 1250000>;
++		};
++	};
++
++	cluster1_opp: opp-table-1 {
++		compatible = "operating-points-v2";
++		opp-shared;
++
++		opp00 {
++			opp-hz = /bits/ 64 <408000000>;
++			opp-microvolt = <800000 800000 1250000>;
++			clock-latency-ns = <40000>;
++		};
++		opp01 {
++			opp-hz = /bits/ 64 <600000000>;
++			opp-microvolt = <800000 800000 1250000>;
++		};
++		opp02 {
++			opp-hz = /bits/ 64 <816000000>;
++			opp-microvolt = <825000 825000 1250000>;
++		};
++		opp03 {
++			opp-hz = /bits/ 64 <1008000000>;
++			opp-microvolt = <850000 850000 1250000>;
++		};
++		opp04 {
++			opp-hz = /bits/ 64 <1200000000>;
++			opp-microvolt = <900000 900000 1250000>;
++		};
++		opp05 {
++			opp-hz = /bits/ 64 <1416000000>;
++			opp-microvolt = <975000 975000 1250000>;
++		};
++		opp06 {
++			opp-hz = /bits/ 64 <1608000000>;
++			opp-microvolt = <1050000 1050000 1250000>;
++		};
++		opp07 {
++			opp-hz = /bits/ 64 <1800000000>;
++			opp-microvolt = <1150000 1150000 1250000>;
++		};
++	};
++
++	gpu_opp_table: opp-table-2 {
++		compatible = "operating-points-v2";
++
++		opp00 {
++			opp-hz = /bits/ 64 <200000000>;
++			opp-microvolt = <800000 800000 1150000>;
++		};
++		opp01 {
++			opp-hz = /bits/ 64 <297000000>;
++			opp-microvolt = <800000 800000 1150000>;
++		};
++		opp02 {
++			opp-hz = /bits/ 64 <400000000>;
++			opp-microvolt = <825000 825000 1150000>;
++		};
++		opp03 {
++			opp-hz = /bits/ 64 <500000000>;
++			opp-microvolt = <850000 850000 1150000>;
++		};
++		opp04 {
++			opp-hz = /bits/ 64 <600000000>;
++			opp-microvolt = <925000 925000 1150000>;
++		};
++		opp05 {
++			opp-hz = /bits/ 64 <800000000>;
++			opp-microvolt = <1075000>;
++		};
++	};
++
++	dmc_opp_table: dmc_opp_table {
++		compatible = "operating-points-v2";
++
++		opp00 {
++			opp-hz = /bits/ 64 <328000000>;
++			opp-microvolt = <900000>;
++		};
++		opp01 {
++			opp-hz = /bits/ 64 <416000000>;
++			opp-microvolt = <900000>;
++		};
++		opp02 {
++			opp-hz = /bits/ 64 <666000000>;
++			opp-microvolt = <900000>;
++		};
++		opp03 {
++			opp-hz = /bits/ 64 <856000000>;
++			opp-microvolt = <900000>;
++		};
++	};
++};
++
++&cpu_l0 {
++	operating-points-v2 = <&cluster0_opp>;
++};
++
++&cpu_l1 {
++	operating-points-v2 = <&cluster0_opp>;
++};
++
++&cpu_l2 {
++	operating-points-v2 = <&cluster0_opp>;
++};
++
++&cpu_l3 {
++	operating-points-v2 = <&cluster0_opp>;
++};
++
++&cpu_b0 {
++	operating-points-v2 = <&cluster1_opp>;
++};
++
++&cpu_b1 {
++	operating-points-v2 = <&cluster1_opp>;
++};
++
++&dmc {
++	operating-points-v2 = <&dmc_opp_table>;
++};
++
++&gpu {
++	operating-points-v2 = <&gpu_opp_table>;
 +};

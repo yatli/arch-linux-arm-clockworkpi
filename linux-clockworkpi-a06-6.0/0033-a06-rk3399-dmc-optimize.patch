@@ -1,0 +1,32 @@
+--- a/drivers/devfreq/rk3399_dmc.c
++++ b/drivers/devfreq/rk3399_dmc.c
+@@ -414,8 +414,8 @@ no_pmu:
+ 		goto err_edev;
+ 	}
+ 
+-	data->ondemand_data.upthreshold = 25;
+-	data->ondemand_data.downdifferential = 15;
++	data->ondemand_data.upthreshold = 10;
++	data->ondemand_data.downdifferential = 5;
+ 
+ 	data->rate = clk_get_rate(data->dmc_clk);
+ 
+--- a/drivers/devfreq/Makefile
++++ b/drivers/devfreq/Makefile
+@@ -7,6 +7,9 @@ obj-$(CONFIG_DEVFREQ_GOV_POWERSAVE)	+= g
+ obj-$(CONFIG_DEVFREQ_GOV_USERSPACE)	+= governor_userspace.o
+ obj-$(CONFIG_DEVFREQ_GOV_PASSIVE)	+= governor_passive.o
+ 
++# DEVFREQ Event Drivers
++obj-$(CONFIG_PM_DEVFREQ_EVENT)		+= event/
++
+ # DEVFREQ Drivers
+ obj-$(CONFIG_ARM_EXYNOS_BUS_DEVFREQ)	+= exynos-bus.o
+ obj-$(CONFIG_ARM_IMX_BUS_DEVFREQ)	+= imx-bus.o
+@@ -15,6 +18,3 @@ obj-$(CONFIG_ARM_MEDIATEK_CCI_DEVFREQ)	+
+ obj-$(CONFIG_ARM_RK3399_DMC_DEVFREQ)	+= rk3399_dmc.o
+ obj-$(CONFIG_ARM_SUN8I_A33_MBUS_DEVFREQ)	+= sun8i-a33-mbus.o
+ obj-$(CONFIG_ARM_TEGRA_DEVFREQ)		+= tegra30-devfreq.o
+-
+-# DEVFREQ Event Drivers
+-obj-$(CONFIG_PM_DEVFREQ_EVENT)		+= event/
