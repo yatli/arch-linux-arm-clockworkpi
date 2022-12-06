@@ -15,7 +15,7 @@ new file mode 100644
 index 00000000..495573e0
 --- /dev/null
 +++ b/arch/arm/dts/rk3399-clockworkpi-a06-u-boot.dtsi
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,32 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +
 +#include "rk3399-u-boot.dtsi"
@@ -23,10 +23,15 @@ index 00000000..495573e0
 +
 +/ {
 +	chosen {
-+		stdout-path = "serial2:115200n8";
++		stdout-path = "serial2:1500000n8";
 +		u-boot,spl-boot-order = "same-as-spl", &sdhci, &sdmmc;
 +	};
 +};
++
++//  &mipi_dsi {
++//  	rockchip,panel = <&dsi_panel>;
++//  };
++
 +
 +&i2c0 {
 +	u-boot,dm-pre-reloc;
@@ -40,12 +45,15 @@ index 00000000..495573e0
 +	u-boot,dm-pre-reloc;
 +};
 +
++&vdd_log {
++	regulator-init-microvolt = <950000>;
++};
 diff --git a/arch/arm/dts/rk3399-clockworkpi-a06.dts b/arch/arm/dts/rk3399-clockworkpi-a06.dts
 new file mode 100644
 index 00000000..8357d05f
 --- /dev/null
 +++ b/arch/arm/dts/rk3399-clockworkpi-a06.dts
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,310 @@
 +/*
 + * (C) Copyright 2016 Rockchip Electronics Co., Ltd
 + *
@@ -63,8 +71,25 @@ index 00000000..8357d05f
 +	compatible = "clockwork,devterm-a06", "rockchip,rk3399";
 +
 +	chosen {
-+		stdout-path = "serial2:115200n8";
++		stdout-path = "serial2:1500000n8";
 +	};
++
++  //   reserved-memory {
++  //     #address-cells = <2>;
++  //     #size-cells = <2>;
++  //     ranges;
++  //     /* 192KB(0xff8c0000~0xff8f0000) for ddr and ATF */
++  //     intmem0: sram@ff8c0000 {
++  //       no-map;
++  //       reg = <0 0xff8c0000 0 0x30000>; /* 192k */
++  //     };
++
++  //     /* 8KB (0xff3b0000~0xff3b2000) for pmusram */
++  //     intmem1: sram@ff3b0000 {
++  //       no-map;
++  //       reg = <0 0xff3b0000 0 0x2000>; /* 8k */
++  //     };
++  //   };
 +
 +	vdd_center: vdd-center {
 +		compatible = "pwm-regulator";
@@ -92,6 +117,22 @@ index 00000000..8357d05f
 +		regulator-boot-on;
 +		regulator-min-microvolt = <3300000>;
 +		regulator-max-microvolt = <3300000>;
++	};
++
++	/* RK3399 logic supply */
++	vdd_log: vdd-log {
++		compatible = "pwm-regulator";
++		pwms = <&pwm2 0 25000 1>;
++		regulator-name = "vdd_log";
++		regulator-always-on;
++		regulator-boot-on;
++		regulator-min-microvolt = <800000>;
++		regulator-max-microvolt = <1400000>;
++		vin-supply = <&vccsys>;
++
++		regulator-state-mem {
++			regulator-on-in-suspend;
++		};
 +	};
 +
 +	vcc_phy: vcc-phy-regulator {
@@ -126,7 +167,95 @@ index 00000000..8357d05f
 +		#clock-cells = <0>;
 +	};
 +
++	//  ocp8178_backlight: backlight@0 {
++	//  	compatible = "ocp8178-backlight";
++	//  	backlight-control-gpios = <&gpio4 RK_PD6 GPIO_ACTIVE_HIGH>;
++	//  	default-brightness = <5>;
++	//  	pinctrl-names = "default";
++	//  	pinctrl-0 = <&backlight_control>;
++	//  };
++
++	//  dsi_panel: panel {
++	//  	compatible = "cw,cwd686";
++	//  	reg = <0>;
++	//  	backlight = <&ocp8178_backlight>;
++	//  	reset-gpios = <&gpio2 RK_PD4 GPIO_ACTIVE_HIGH>;
++	//  	rotation = <90>;
++	//  	dsi,lanes = <4>;
++	//  	pinctrl-names = "default";
++	//  	pinctrl-0 = <&panel_reset>;
++	//  	status = "okay";
++	//  	power-supply = <&vcc33_lcd>;
++
++	//  	port {
++	//  		panel_in: endpoint {
++	//  			remote-endpoint = <&mipi_dsi_out>;
++	//  		};
++	//  	};
++	//  };
 +};
++
++//  &mipi_dsi {
++//  	status = "okay";
++//  	rockchip,panel = <&dsi_panel>;
++//  	ports {
++//  		mipi_out: port@1 {
++//  			reg = <1>;
++//  			#address-cells = <1>;
++//  			#size-cells = <0>;
++//  			mipi_dsi_out: endpoint {
++//  				remote-endpoint = <&panel_in>;
++//  			};
++//  		};
++//  	};
++//  };
++
++&pwm2 {
++	status = "okay";
++};
++
++&io_domains {
++	status = "okay";
++	gpio1830-supply = <&vcc_3v0>;		/* gpio1833_gpio4cd_ms */
++};
++
++&pmu_io_domains {
++	status = "okay";
++	pmu1830-supply = <&vcc_3v0>;
++};
++
++
++//  &vopl {
++//  	status = "okay";
++//  };
++//  
++//  &vopl_mmu {
++//  	status = "okay";
++//  };
++//  
++//  &vopb {
++//  	status = "okay";
++//  };
++//  
++//  &vopb_mmu {
++//  	status = "okay";
++//  };
++//  
++//  &hdmi_in_vopb {
++//  	status = "okay";
++//  };
++//  
++//  &hdmi_in_vopl {
++//  	status = "disable";
++//  };
++//  
++//  &mipi_in_vopb {
++//  	status = "disable";
++//  };
++//  
++//  &mipi_in_vopl {
++//  	status = "okay";
++//  };
 +
 +&saradc {
 +	status = "okay";
@@ -187,10 +316,25 @@ index 00000000..8357d05f
 +
 +		regulators {
 +			vcc33_lcd: SWITCH_REG2 {
++        compatible = "regulator-fixed";
 +				regulator-always-on;
 +				regulator-boot-on;
 +				regulator-name = "vcc33_lcd";
 +			};
++
++      vcc_3v0: LDO_REG8 {
++				regulator-name = "vcc_3v0";
++				regulator-always-on;
++				regulator-boot-on;
++				regulator-min-microvolt = <3000000>;
++				regulator-max-microvolt = <3000000>;
++				regulator-state-mem {
++					regulator-on-in-suspend;
++					regulator-suspend-microvolt = <3000000>;
++				};
++			};
++
++
 +		};
 +	};
 +};
@@ -207,6 +351,17 @@ index 00000000..8357d05f
 +				<1 18 RK_FUNC_GPIO &pcfg_pull_down>;
 +		};
 +	};
++//  	panel {
++//  		panel_reset: panel-reset {
++//  			rockchip,pins = <2 RK_PD4 RK_FUNC_GPIO &pcfg_output_low>;
++//  		};
++//  	};
++//  
++//  	backlight {
++//  		backlight_control: backlight-control {
++//  			rockchip,pins = <4 RK_PD6 RK_FUNC_GPIO &pcfg_output_low>;
++//  		};
++//  	};
 +};
 +
 diff --git a/configs/clockworkpi-a06-rk3399_defconfig b/configs/clockworkpi-a06-rk3399_defconfig
@@ -214,7 +369,7 @@ new file mode 100644
 index 00000000..826139c1
 --- /dev/null
 +++ b/configs/clockworkpi-a06-rk3399_defconfig
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,63 @@
 +CONFIG_ARM=y
 +CONFIG_ARCH_ROCKCHIP=y
 +CONFIG_SYS_TEXT_BASE=0x00200000
@@ -230,18 +385,15 @@ index 00000000..826139c1
 +CONFIG_MISC_INIT_R=y
 +# CONFIG_DISPLAY_CPUINFO is not set
 +CONFIG_DISPLAY_BOARDINFO_LATE=y
-+# CONFIG_SPL_RAW_IMAGE_SUPPORT is not set
-+CONFIG_SPL_STACK_R=y
-+CONFIG_SPL_STACK_R_MALLOC_SIMPLE_LEN=0x10000
-+CONFIG_TPL=y
++
++# use rkbin
++
 +CONFIG_CMD_BOOTZ=y
 +CONFIG_CMD_GPT=y
 +CONFIG_CMD_MMC=y
 +CONFIG_CMD_USB=y
 +# CONFIG_CMD_SETEXPR is not set
 +CONFIG_CMD_TIME=y
-+CONFIG_SPL_OF_CONTROL=y
-+CONFIG_OF_SPL_REMOVE_PROPS="pinctrl-0 pinctrl-names clock-names interrupt-parent assigned-clocks assigned-clock-rates assigned-clock-parents"
 +CONFIG_ENV_IS_IN_MMC=y
 +CONFIG_SYS_RELOC_GD_ENV_ADDR=y
 +CONFIG_ROCKCHIP_GPIO=y
@@ -254,19 +406,30 @@ index 00000000..826139c1
 +CONFIG_REGULATOR_RK8XX=y
 +CONFIG_RAM_RK3399_LPDDR4=y
 +CONFIG_RAM_ROCKCHIP_DEBUG=y
-+CONFIG_BAUDRATE=115200
++CONFIG_BAUDRATE=1500000
 +CONFIG_DEBUG_UART_SHIFT=2
 +CONFIG_SYSRESET=y
++CONFIG_DM_RESET=y
++CONFIG_RESET_ROCKCHIP=y
 +CONFIG_USB=y
 +CONFIG_USB_XHCI_HCD=y
 +CONFIG_USB_XHCI_DWC3=y
 +CONFIG_USB_EHCI_HCD=y
 +CONFIG_USB_EHCI_GENERIC=y
 +CONFIG_USB_KEYBOARD=y
-+CONFIG_DM_VIDEO=y
-+CONFIG_DISPLAY=y
-+CONFIG_VIDEO_ROCKCHIP=y
-+CONFIG_DISPLAY_ROCKCHIP_HDMI=y
-+CONFIG_SPL_TINY_MEMSET=y
 +CONFIG_ERRNO_STR=y
 +CONFIG_SYS_LOAD_ADDR=0x800800
++CONFIG_BOOTDELAY=0
++
++//  CONFIG_DM_VIDEO=y
++//  CONFIG_DISPLAY=y
++//  CONFIG_VIDEO_ROCKCHIP=y
++//  CONFIG_DISPLAY_ROCKCHIP_MIPI=y
++//  CONFIG_BACKLIGHT_OCP8178=y
++//  CONFIG_SIMPLE_PANEL=y
++//  
++//  CONFIG_LOG=y
++//  CONFIG_LOG_CONSOLE=y
++//  CONFIG_LOG_DEFAULT_LEVEL=6
++//  CONFIG_LOG_MAX_LEVEL=7
++//  CONFIG_LOGLEVEL=7
