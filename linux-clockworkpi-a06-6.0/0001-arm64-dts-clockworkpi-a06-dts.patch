@@ -10,7 +10,7 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-firefly.dtb
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
-@@ -0,0 +1,1120 @@
+@@ -0,0 +1,1150 @@
 +/*
 + * SPDX-License-Identifier: (GPL-2.0+ or MIT)
 + * Copyright (c) 2017 Fuzhou Rockchip Electronics Co., Ltd.
@@ -1131,6 +1131,36 @@
 +		<&gpio1 RK_PC1 GPIO_ACTIVE_HIGH>,
 +		<&gpio1 RK_PB6 GPIO_ACTIVE_HIGH>;
 +};
++
++/*
++ * Set some suspend operating points to avoid OVP in suspend
++ *
++ * When we go into S3 ARM Trusted Firmware will transition our PWM regulators
++ * from wherever they're at back to the "default" operating point (whatever
++ * voltage we get when we set the PWM pins to "input").
++ *
++ * This quick transition under light load has the possibility to trigger the
++ * regulator "over voltage protection" (OVP).
++ *
++ * To make extra certain that we don't hit this OVP at suspend time, we'll
++ * transition to a voltage that's much closer to the default (~1.0 V) so that
++ * there will not be a big jump.  Technically we only need to get within 200 mV
++ * of the default voltage, but the speed here should be fast enough and we need
++ * suspend/resume to be rock solid.
++ */
++
++&cluster0_opp {
++	opp05 { //1.1v
++		opp-suspend;
++	};
++};
++
++&cluster1_opp {
++	opp06 { //1.05v
++		opp-suspend;
++	};
++};
++
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-opp-clockworkpi-a06.dtsi
 @@ -0,0 +1,159 @@
