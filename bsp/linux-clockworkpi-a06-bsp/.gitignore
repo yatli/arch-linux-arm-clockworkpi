@@ -1,0 +1,7 @@
+src/
+pkg/
+develop-4.19.zip
+*.log
+*.txt
+*.xz
+*.list

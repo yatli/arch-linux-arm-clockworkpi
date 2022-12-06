@@ -1,0 +1,212 @@
+--- a/drivers/video/Kconfig
++++ b/drivers/video/Kconfig
+@@ -85,6 +85,12 @@ config BACKLIGHT_GPIO
+ 	  it understands the standard device tree
+ 	  (leds/backlight/gpio-backlight.txt)
+ 
++config BACKLIGHT_OCP8178
++	bool "OCP8178 Backlight Driver"
++	depends on BACKLIGHT
++	help
++	  If you have an OCP8178, say Y to enable the backlight driver.
++
+ config CMD_VIDCONSOLE
+ 	bool "Enable vidconsole commands lcdputs and setcurs"
+ 	depends on DM_VIDEO
+--- a/drivers/video/Makefile
++++ b/drivers/video/Makefile
+@@ -7,6 +7,7 @@ ifdef CONFIG_DM
+ obj-$(CONFIG_BACKLIGHT) += backlight-uclass.o
+ obj-$(CONFIG_BACKLIGHT_GPIO) += backlight_gpio.o
+ obj-$(CONFIG_BACKLIGHT_PWM) += pwm_backlight.o
++obj-$(CONFIG_BACKLIGHT_OCP8178) += ocp8178_backlight.o
+ obj-$(CONFIG_CONSOLE_NORMAL) += console_normal.o
+ obj-$(CONFIG_CONSOLE_ROTATION) += console_rotate.o
+ obj-$(CONFIG_CONSOLE_TRUETYPE) += console_truetype.o fonts/
+--- a/drivers/video/ocp8178_backlight.c
++++ b/drivers/video/ocp8178_backlight.c
+@@ -0,0 +1,184 @@
++/*
++ * ocp8178_bl.c - ocp8178 backlight driver
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
++#include <common.h>
++#include <dm.h>
++#include <backlight.h>
++#include <log.h>
++#include <asm/gpio.h>
++#include <linux/delay.h>
++
++#define DETECT_DELAY 200
++#define DETECT_TIME 500
++#define DETECT_WINDOW_TIME 1000
++#define START_TIME 10
++#define END_TIME 10
++#define SHUTDOWN_TIME 3000
++#define LOW_BIT_HIGH_TIME 10
++#define LOW_BIT_LOW_TIME 50
++#define HIGH_BIT_HIGH_TIME 50
++#define HIGH_BIT_LOW_TIME 10
++#define MAX_BRIGHTNESS_VALUE 9
++
++struct ocp8178_backlight_priv {
++	struct gpio_desc gpio;
++	int value;
++};
++
++static void entry_1wire_mode(struct ocp8178_backlight_priv *gbl)
++{
++	/*unsigned long flags = 0;*/
++	/*local_irq_save(flags);*/
++	dm_gpio_set_value(&gbl->gpio, 0);
++	mdelay(SHUTDOWN_TIME/1000);
++	dm_gpio_set_value(&gbl->gpio, 1);
++	udelay(DETECT_DELAY);
++	dm_gpio_set_value(&gbl->gpio, 0);
++	udelay(DETECT_TIME);
++	dm_gpio_set_value(&gbl->gpio, 1);
++	udelay(DETECT_WINDOW_TIME);
++	/*local_irq_restore(flags);*/
++}
++
++static inline void write_bit(struct ocp8178_backlight_priv *gbl, int bit)
++{
++	if (bit) {
++		dm_gpio_set_value(&gbl->gpio, 0);
++		udelay(HIGH_BIT_LOW_TIME);
++		dm_gpio_set_value(&gbl->gpio, 1);
++		udelay(HIGH_BIT_HIGH_TIME);
++	} else {
++		dm_gpio_set_value(&gbl->gpio, 0);
++		udelay(LOW_BIT_LOW_TIME);
++		dm_gpio_set_value(&gbl->gpio, 1);
++		udelay(LOW_BIT_HIGH_TIME);
++	}
++}
++
++static void write_byte(struct ocp8178_backlight_priv *gbl, int byte)
++{
++	/*unsigned long flags = 0;*/
++	unsigned char data = 0x72;
++	int i;
++
++	/*local_irq_save(flags);*/
++
++	dm_gpio_set_value(&gbl->gpio, 1);
++	udelay(START_TIME);
++	for(i = 0; i < 8; i++) {
++		if(data & 0x80) {
++			write_bit(gbl, 1);
++		} else {
++			write_bit(gbl, 0);
++		}
++		data <<= 1;
++	}
++	dm_gpio_set_value(&gbl->gpio, 0);
++	udelay(END_TIME);
++
++	data = byte & 0x1f;
++
++	dm_gpio_set_value(&gbl->gpio, 1);
++	udelay(START_TIME);
++	for(i = 0; i < 8; i++) {
++		if(data & 0x80) {
++			write_bit(gbl, 1);
++		} else {
++			write_bit(gbl, 0);
++		}
++		data <<= 1;
++	}
++	dm_gpio_set_value(&gbl->gpio, 0);
++	udelay(END_TIME);
++	dm_gpio_set_value(&gbl->gpio, 1);
++
++	/*local_irq_restore(flags);*/
++}
++
++unsigned char ocp8178_bl_table[MAX_BRIGHTNESS_VALUE+1] = {0, 1, 4, 8, 12, 16, 20, 24, 28, 31};
++
++static int ocp8178_backlight_set_brightness(struct udevice *dev, int percent)
++{
++	struct ocp8178_backlight_priv *gbl = dev_get_priv(dev);
++	int level = percent * MAX_BRIGHTNESS_VALUE / 100;
++  int i;
++
++  printf("%s\n", __PRETTY_FUNCTION__);
++	if(level > MAX_BRIGHTNESS_VALUE)
++		level = MAX_BRIGHTNESS_VALUE;
++
++	for(i = 0; i < 2; i++) {
++		entry_1wire_mode(gbl);
++		write_byte(gbl, ocp8178_bl_table[level]);
++	}
++	gbl->value = level;
++
++	return 0;
++}
++
++static int ocp8178_backlight_enable(struct udevice *dev)
++{
++  printf("%s\n", __PRETTY_FUNCTION__);
++	ocp8178_backlight_set_brightness(dev, 50);
++
++	return 0;
++}
++
++
++static int ocp8178_backlight_of_to_plat(struct udevice *dev)
++{
++	struct ocp8178_backlight_priv *priv = dev_get_priv(dev);
++	int ret;
++
++  printf("%s\n", __PRETTY_FUNCTION__);
++
++	ret = gpio_request_by_name(dev, "backlight-control-gpios", 0, &priv->gpio,
++				   gpio_IS_OUT);
++	if (ret) {
++		debug("%s: Warning: cannot get GPIO: ret=%d\n",
++		      __func__, ret);
++		return ret;
++    priv->value = -1;
++	}
++
++	/*priv->value = dev_read_bool(dev, "default-on");*/
++	priv->value = 5;
++
++	return 0;
++}
++
++static int ocp8178_backlight_probe(struct udevice *dev)
++{
++	struct ocp8178_backlight_priv *priv = dev_get_priv(dev);
++  printf("%s\n", __PRETTY_FUNCTION__);
++
++	if (priv->value >= 0)
++		ocp8178_backlight_enable(dev);
++
++	return 0;
++}
++
++static const struct backlight_ops ocp8178_backlight_ops = {
++	.enable	= ocp8178_backlight_enable,
++	.set_brightness	= ocp8178_backlight_set_brightness,
++};
++
++static const struct udevice_id ocp8178_backlight_ids[] = {
++	{ .compatible = "ocp8178-backlight" },
++	{ }
++};
++
++U_BOOT_DRIVER(ocp8178_backlight) = {
++	.name	= "ocp8178_backlight",
++	.id	= UCLASS_PANEL_BACKLIGHT,
++	.of_match = ocp8178_backlight_ids,
++	.ops	= &ocp8178_backlight_ops,
++	.of_to_plat	= ocp8178_backlight_of_to_plat,
++	.probe		= ocp8178_backlight_probe,
++	.priv_auto	= sizeof(struct ocp8178_backlight_priv),
++};

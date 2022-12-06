@@ -63,14 +63,17 @@ build() {
   update_config 'CONFIG_IDENT_STRING' '" Arch Linux ARM-BSP"'
   update_config 'CONFIG_OF_LIBFDT_OVERLAY' 'y'
   update_config 'CONFIG_SPL_MMC_SDHCI_SDMA' 'y'
-  make EXTRAVERSION=-$(date -R | cut -c18-25)
+  make EXTRAVERSION=-$(date -R | cut -c18-25) u-boot-dtb.bin
+
+  echo "Run gen-image.sh on x64 host to generate uboot.img!"
 
 # XXX this may not run in a qemu-arm64 environment
-  cd ${srcdir}/rkbin
-  tools/trust_merger RKTRUST/RK3399TRUST.ini
-  tools/loaderimage --pack --uboot ../u-boot-${pkgver/rc/-rc}/u-boot.bin uboot.img 0x00200000
-  tools/mkimage -n rk3399 -T rksd -d bin/rk33/rk3399_ddr_800MHz_v1.27.bin idbloader.img
-  cat bin/rk33/rk3399_miniloader_v1.26.bin >> idbloader.img
+# cd ${srcdir}/rkbin
+# tools/trust_merger RKTRUST/RK3399TRUST.ini
+# tools/loaderimage --pack --uboot ../u-boot-${pkgver/rc/-rc}/u-boot.bin uboot.img 0x00200000
+# tools/mkimage -n rk3399 -T rksd -d bin/rk33/rk3399_ddr_800MHz_v1.27.bin idbloader.img
+# cat bin/rk33/rk3399_miniloader_v1.26.bin >> idbloader.img
+  
 }
 
 package() {
