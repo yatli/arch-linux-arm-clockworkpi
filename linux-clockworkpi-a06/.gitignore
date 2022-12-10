@@ -1,4 +1,3 @@
-*.xz
-src/
 pkg/
-src_snapshot/
+src/
+*.xz

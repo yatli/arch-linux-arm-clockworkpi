@@ -4,10 +4,10 @@
 # Contributor: Kevin Mihelich <kevin@archlinuxarm.org>
 
 pkgbase=linux-clockworkpi-a06
-_srcname=linux-5.18
+_srcname=linux-6.0
 _kernelname=${pkgbase#linux}
 _desc="Kernel for ClockworkPI A06"
-pkgver=5.18.9
+pkgver=6.0.9
 pkgrel=1
 arch=('aarch64')
 url="http://www.kernel.org/"
@@ -15,8 +15,8 @@ license=('GPL2')
 makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'git' 'dtc')
 options=('!strip')
 groups=('clockworkpi-a06')
-source=("http://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
-        "http://www.kernel.org/pub/linux/kernel/v5.x/patch-${pkgver}.xz"
+source=("http://www.kernel.org/pub/linux/kernel/v6.x/${_srcname}.tar.xz"
+        "http://www.kernel.org/pub/linux/kernel/v6.x/patch-${pkgver}.xz"
         '0001-net-smsc95xx-Allow-mac-address-to-be-set-as-a-parame.patch'
         '0023-drm-rockchip-support-gamma-control-on-RK3399.patch' # From list: https://patchwork.kernel.org/project/linux-arm-kernel/cover/20211019215843.42718-1-sigmaris@gmail.com/
         '0001-arm64-dts-clockworkpi-a06-dts.patch' # Potentially upstreamable, needs cleanup
@@ -26,13 +26,13 @@ source=("http://www.kernel.org/pub/linux/kernel/v5.x/${_srcname}.tar.xz"
         '0030-rockchip-suspend.patch'    # adapted from linux-pinebook-pro
         '0031-gpio-pwm-fan.patch'    # https://lwn.net/Articles/830406/ slightly adapted
         '0032-a06-battery-adjust.patch'
-        '0033-rockchip-spidev.patch' # adds rockchip,spidev to spidev driver OF list
+        '0033-a06-rk3399-dmc-optimize.patch'
         'config'
         'linux.preset'
         '60-linux.hook'
         '90-linux.hook')
-md5sums=('58e80452e2d8e1993cd7ec95e697ab5a'
-         'f8615824acfd5dec5b6f385d96fa9565'
+md5sums=('SKIP'
+         'SKIP'
          '9e6b7f44db105fef525d715213dce7cf'
          'e2f08e3bc6d1b36e7000233abab1bfc7'
          '47b5d277130f9073bdb926a975838a6a'
@@ -69,8 +69,9 @@ prepare() {
   # Yatli
   patch -Np1 -i "${srcdir}/0030-rockchip-suspend.patch"
   patch -Np1 -i "${srcdir}/0031-gpio-pwm-fan.patch"
-  patch -Np1 -i "${srcdir}/0032-a06-battery-adjust.patch"
-  patch -Np1 -i "${srcdir}/0033-rockchip-spidev.patch"
+# CAUTION: battery adjust lowers minimum voltage to 2.9v
+# patch -Np1 -i "${srcdir}/0032-a06-battery-adjust.patch"
+  patch -Np1 -i "${srcdir}/0033-a06-rk3399-dmc-optimize.patch"
 
   cat "${srcdir}/config" > ./.config
 
