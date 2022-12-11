@@ -10,7 +10,7 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-firefly.dtb
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
-@@ -0,0 +1,1150 @@
+@@ -0,0 +1,1109 @@
 +/*
 + * SPDX-License-Identifier: (GPL-2.0+ or MIT)
 + * Copyright (c) 2017 Fuzhou Rockchip Electronics Co., Ltd.
@@ -232,12 +232,14 @@
 +
 +	battery: battery@0 {
 +		compatible = "simple-battery";
-+   device-chemistry = "lithium-ion";
-+		// constant-charge-current-max-microamp = <2100000>;
-+		// voltage-min-design-microvolt = <2850000>;
++		device-chemistry = "lithium-ion";
++		constant-charge-current-max-microamp = <2100000>;
 +		voltage-max-design-microvolt = <4200000>;
 +		re-charge-voltage-microvolt = <4000000>;
-+   // charge-full-design-microamp-hours = <6700000>; // 2x3350mAh
++		// adjust the following params according to your battery specs
++		voltage-min-design-microvolt = <3300000>; 
++		energy-full-design-microwatt-hours = <24790000>; // 2x3350mAh * 3.7v
++		charge-full-design-microamp-hours = <6700000>; // 2x3350mAh
 +	};
 +
 +	ocp8178_backlight: backlight@0 {
@@ -889,66 +891,33 @@
 +	status = "okay";
 +};
 +
-+&tcphy0 {
-+	status = "okay";
-+};
-+
-+/* phy1 not connected
-+&tcphy1 {
-+	status = "okay";
-+};
-+*/
-+
 +&u2phy0 {
 +	status = "okay";
-+
-+  /*
-+	u2phy0_otg: otg-port {
-+		status = "okay";
-+	};
-+  */
-+
-+	u2phy0_host: host-port {
-+		phy-supply = <&usb3_vbus>;
-+		status = "okay";
-+	};
 +};
 +
-+/* PHY1 is not connected
-+&u2phy1 {
-+	status = "okay";
-+
-+	u2phy1_otg: otg-port {
-+		status = "okay";
-+	};
-+
-+	u2phy1_host: host-port {
-+		phy-supply = <&usb_vbus>;
-+		status = "okay";
-+	};
++&u2phy0_host {
++  phy-supply = <&usb3_vbus>;
++  status = "okay";
 +};
-+*/
 +
 +// rockchip,rk3399-dwc3
 +&usbdrd3_0 {
 +	status = "okay";
 +};
 +
++// u2phy otg provides otg PHY for the type-C port 0
++&u2phy0_otg {
++  status = "okay";
++};
++
 +&usbdrd_dwc3_0 {
 +  status = "okay";
-+  dr_mode = "host";
++  dr_mode = "peripheral";
++  // limit to usb2.0, as we won't enable 3.0 phy
++  maximum-speed = "high-speed";
++  phys = <&u2phy0_otg>;
++  phy-names = "usb2-phy";
 +};
-+
-+/* phy1 not connected
-+&usbdrd3_1 {
-+	status = "okay";
-+};
-+
-+&usbdrd_dwc3_1 {
-+  status = "okay";
-+  dr_mode = "host";
-+};
-+*/
 +
 +&usb_host0_ehci {
 +	status = "okay";
@@ -957,16 +926,6 @@
 +&usb_host0_ohci {
 +	status = "okay";
 +};
-+
-+/* host1 not connected
-+&usb_host1_ehci {
-+	status = "okay";
-+};
-+
-+&usb_host1_ohci {
-+	status = "okay";
-+};
-+*/
 +
 +&pinctrl {
 +
@@ -1323,3 +1282,14 @@
 +&gpu {
 +	operating-points-v2 = <&gpu_opp_table>;
 +};
+--- a/arch/arm64/boot/dts/rockchip/rk3399.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
+@@ -446,7 +446,7 @@
+ 		reset-names = "usb3-otg";
+ 		status = "disabled";
+ 
+-		usbdrd_dwc3_0: usb@fe800000 {
++		usbdrd_dwc3_0: dwc3@fe800000 {
+ 			compatible = "snps,dwc3";
+ 			reg = <0x0 0xfe800000 0x0 0x100000>;
+ 			interrupts = <GIC_SPI 105 IRQ_TYPE_LEVEL_HIGH 0>;
