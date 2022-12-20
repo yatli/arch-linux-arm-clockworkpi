@@ -24,26 +24,24 @@ source=("http://www.kernel.org/pub/linux/kernel/v6.x/${_srcname}.tar.xz"
         '0004-gpu-drm-panel-add-cwd686-driver.patch' # Potentially upstreamable, needs cleanup
         '0005-video-backlight-add-ocp8178-driver.patch' # Potentially upstreamable, needs cleanup
         '0030-rockchip-suspend.patch'    # adapted from linux-pinebook-pro
-        '0031-gpio-pwm-fan.patch'    # https://lwn.net/Articles/830406/ slightly adapted
         '0032-a06-battery-adjust.patch'
         '0033-a06-rk3399-dmc-optimize.patch'
         'config'
         'linux.preset'
         '60-linux.hook'
         '90-linux.hook')
-md5sums=('SKIP'
-         'SKIP'
+md5sums=('d681bd1d62d48049a4874646f6774d92'
+         '2ca06d7252389d7f589cd4b136925562'
          '9e6b7f44db105fef525d715213dce7cf'
          'e2f08e3bc6d1b36e7000233abab1bfc7'
-         '47b5d277130f9073bdb926a975838a6a'
-         'f4895fa5b399dec785102f3a4a091175'
+         '8001de0fa43d0de1aadd19c81e6d4262'
+         'a4156247d001d9a1f3a25050aecd4f67'
          '68729a165d157c29fa451b86b01785a9'
          '3203d018422505068fc22b909df871aa'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
-         'SKIP'
+         '1b0bf7bf9a06ac231bb951cb4d961001'
+         '93712e0149c8e292af5f85dc30e5e960'
+         'b30f8e848c5936e4a3fc41a64a76a97d'
+         '070cfed1f004b90e00e0d3be36c11f1f'
          '86d4a35722b5410e3b29fc92dae15d4b'
          'ce6c81ad1ad1f8b333fd6077d47abdaf'
          '3dc88030a8f2f5a5f97266d99b149f77')
@@ -68,7 +66,6 @@ prepare() {
 
   # Yatli
   patch -Np1 -i "${srcdir}/0030-rockchip-suspend.patch"
-  patch -Np1 -i "${srcdir}/0031-gpio-pwm-fan.patch"
 # CAUTION: battery adjust lowers minimum voltage to 2.9v
 # patch -Np1 -i "${srcdir}/0032-a06-battery-adjust.patch"
   patch -Np1 -i "${srcdir}/0033-a06-rk3399-dmc-optimize.patch"
