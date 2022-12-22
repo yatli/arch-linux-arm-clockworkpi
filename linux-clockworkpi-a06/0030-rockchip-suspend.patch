@@ -371,7 +371,7 @@
 +}
 --- a/drivers/regulator/core.c
 +++ b/drivers/regulator/core.c
-@@ -5411,6 +5411,14 @@ void regulator_unregister(struct regulator_dev *rdev)
+@@ -5662,6 +5662,14 @@ void regulator_unregister(struct regulat
  EXPORT_SYMBOL_GPL(regulator_unregister);
  
  #ifdef CONFIG_SUSPEND
@@ -386,7 +386,7 @@
  /**
   * regulator_suspend - prepare regulators for system wide suspend
   * @dev: ``&struct device`` pointer that is passed to _regulator_suspend()
-@@ -5430,6 +5438,28 @@ static int regulator_suspend(struct device *dev)
+@@ -5681,6 +5689,28 @@ static int regulator_suspend(struct devi
  
  	regulator_lock(rdev);
  	ret = __suspend_set_state(rdev, rstate);
@@ -415,15 +415,22 @@
  	regulator_unlock(rdev);
  
  	return ret;
-@@ -5452,9 +5482,19 @@ static int regulator_resume(struct device *dev)
+@@ -5697,15 +5727,25 @@ static int regulator_resume(struct devic
+ 	if (rstate == NULL)
+ 		return 0;
  
+-	/* Avoid grabbing the lock if we don't need to */
+-	if (!rdev->desc->ops->resume)
+-		return 0;
+-
  	regulator_lock(rdev);
  
--	if (rstate->enabled == ENABLE_IN_SUSPEND ||
+ 	if (rstate->enabled == ENABLE_IN_SUSPEND ||
 -	    rstate->enabled == DISABLE_IN_SUSPEND)
 -		ret = rdev->desc->ops->resume(rdev);
-+	if (rstate->enabled == ENABLE_IN_SUSPEND || rstate->enabled == DISABLE_IN_SUSPEND) {
++	    rstate->enabled == DISABLE_IN_SUSPEND) {
 +		if (rdev->desc->ops->resume) {
++      rdev_info(rdev, "resume with ops\n");
 +			ret = rdev->desc->ops->resume(rdev);
 +		} else if ((rstate->enabled == ENABLE_IN_SUSPEND && !rdev->desc->ops->set_suspend_enable) || 
 +		           (rstate->enabled == DISABLE_IN_SUSPEND && !rdev->desc->ops->set_suspend_disable)) {
@@ -433,7 +440,9 @@
 +			} else if (!rdev->resume_state && can_disable(rdev)) {
 +				ret = _regulator_do_disable(rdev);
 +			}
-+		}
++		} else {
++      rdev_info(rdev, "no resume option taken!\n");
++    }
 +	}
  
  	regulator_unlock(rdev);

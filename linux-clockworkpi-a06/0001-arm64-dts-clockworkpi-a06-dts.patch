@@ -1083,7 +1083,7 @@
 +
 +&rockchip_suspend {
 +	status = "okay";
-+	rockchip,sleep-debug-en = <0>;
++	rockchip,sleep-debug-en = <1>;
 +	rockchip,sleep-mode-config = <
 +		(0
 +		| RKPM_SLP_ARMPD
