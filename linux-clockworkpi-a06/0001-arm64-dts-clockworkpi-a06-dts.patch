@@ -83,7 +83,7 @@
 +    status = "okay";
 +
 +		regulator-state-mem {
-+			regulator-on-in-suspend;
++			regulator-off-in-suspend;
 +		};
 +	};
 +

@@ -17,7 +17,6 @@ options=('!strip')
 groups=('clockworkpi-a06')
 source=("http://www.kernel.org/pub/linux/kernel/v6.x/${_srcname}.tar.xz"
         "http://www.kernel.org/pub/linux/kernel/v6.x/patch-${pkgver}.xz"
-        '0001-net-smsc95xx-Allow-mac-address-to-be-set-as-a-parame.patch'
         '0023-drm-rockchip-support-gamma-control-on-RK3399.patch' # From list: https://patchwork.kernel.org/project/linux-arm-kernel/cover/20211019215843.42718-1-sigmaris@gmail.com/
         '0001-arm64-dts-clockworkpi-a06-dts.patch' # Potentially upstreamable, needs cleanup
         '0002-mfd-axp20x-add-clockworkpi-a06-power-support.patch' # Looks potentially incorrect. Probably not upstreamable
@@ -32,7 +31,6 @@ source=("http://www.kernel.org/pub/linux/kernel/v6.x/${_srcname}.tar.xz"
         '90-linux.hook')
 md5sums=('d681bd1d62d48049a4874646f6774d92'
          '2ca06d7252389d7f589cd4b136925562'
-         '9e6b7f44db105fef525d715213dce7cf'
          'e2f08e3bc6d1b36e7000233abab1bfc7'
          '2275281c48ce2d17681f320c59f1228d'
          'a4156247d001d9a1f3a25050aecd4f67'
@@ -52,9 +50,6 @@ prepare() {
   # add upstream patch
   patch -Np1 -i "${srcdir}/patch-${pkgver}"
 
-  # ALARM patches
-  #patch -Np1 -i "${srcdir}/0001-net-smsc95xx-Allow-mac-address-to-be-set-as-a-parame.patch"             #All
-  
   # Manjaro ARM Patches
   patch -Np1 -i "${srcdir}/0023-drm-rockchip-support-gamma-control-on-RK3399.patch"                     #RK3399
   
