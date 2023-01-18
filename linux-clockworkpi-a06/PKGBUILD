@@ -32,7 +32,7 @@ source=("http://www.kernel.org/pub/linux/kernel/v6.x/${_srcname}.tar.xz"
 md5sums=('d681bd1d62d48049a4874646f6774d92'
          '2ca06d7252389d7f589cd4b136925562'
          'e2f08e3bc6d1b36e7000233abab1bfc7'
-         '2275281c48ce2d17681f320c59f1228d'
+         'fcd20a0792fd24f489a496302b295fcb'
          'a4156247d001d9a1f3a25050aecd4f67'
          '68729a165d157c29fa451b86b01785a9'
          '3203d018422505068fc22b909df871aa'
