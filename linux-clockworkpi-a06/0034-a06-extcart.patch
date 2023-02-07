@@ -1,0 +1,276 @@
+--- a/.config
++++ b/.config
+@@ -4143,7 +4143,9 @@ CONFIG_GENERIC_PINCONF=y
+ CONFIG_PINCTRL_AMD=y
+ CONFIG_PINCTRL_AXP209=y
+ CONFIG_PINCTRL_MAX77620=y
+-# CONFIG_PINCTRL_MCP23S08 is not set
++CONFIG_PINCTRL_MCP23S08_I2C=m
++CONFIG_PINCTRL_MCP23S08_SPI=m
++CONFIG_PINCTRL_MCP23S08=m
+ # CONFIG_PINCTRL_MICROCHIP_SGPIO is not set
+ # CONFIG_PINCTRL_OCELOT is not set
+ CONFIG_PINCTRL_RK805=y
+@@ -8534,6 +8536,7 @@ CONFIG_PWM_SYSFS=y
+ CONFIG_PWM_CROS_EC=m
+ # CONFIG_PWM_DWC is not set
+ # CONFIG_PWM_FSL_FTM is not set
++CONFIG_PWM_GP7101=m
+ # CONFIG_PWM_PCA9685 is not set
+ CONFIG_PWM_ROCKCHIP=y
+ # CONFIG_PWM_XILINX is not set
+--- a/drivers/pwm/Makefile
++++ b/drivers/pwm/Makefile
+@@ -17,7 +17,7 @@ obj-$(CONFIG_PWM_CROS_EC)	+= pwm-cros-ec
+ obj-$(CONFIG_PWM_DWC)		+= pwm-dwc.o
+ obj-$(CONFIG_PWM_EP93XX)	+= pwm-ep93xx.o
+ obj-$(CONFIG_PWM_FSL_FTM)	+= pwm-fsl-ftm.o
++obj-$(CONFIG_PWM_GP7101)	+= pwm-gp7101.o
+ obj-$(CONFIG_PWM_HIBVT)		+= pwm-hibvt.o
+ obj-$(CONFIG_PWM_IMG)		+= pwm-img.o
+ obj-$(CONFIG_PWM_IMX1)		+= pwm-imx1.o
+--- a/drivers/pwm/Kconfig
++++ b/drivers/pwm/Kconfig
+@@ -205,6 +205,17 @@ config PWM_FSL_FTM
+ 	  To compile this driver as a module, choose M here: the module
+ 	  will be called pwm-fsl-ftm.
+ 
++config PWM_GP7101
++	tristate "GP7101 PWM support"
++	depends on I2C
++	depends on OF
++	select REGMAP_I2C
++	help
++	  Generic PWM framework driver for GP7101.
++
++	  To compile this driver as a module, choose M here: the module
++	  will be called pwm-gp7101.
++
+ config PWM_HIBVT
+ 	tristate "HiSilicon BVT PWM support"
+ 	depends on ARCH_HISI || COMPILE_TEST
+--- /dev/null
++++ b/drivers/pwm/pwm-gp7101.c
+@@ -0,0 +1,131 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Driver for GP7101 Generic Pulse Width Modulator
++ *
++ * Copyright (C) 2023
++ * Author: Yatao Li <yatao.li@live.com>
++ */
++
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/platform_device.h>
++#include <linux/i2c.h>
++#include <linux/pwm.h>
++#include <linux/regmap.h>
++
++/*
++ * This driver handles the PWM of GP7101.
++ */
++
++struct gp7101_pwm_chip {
++	struct pwm_chip chip;
++	struct regmap *regmap;
++  u8 duty;
++};
++
++static inline struct gp7101_pwm_chip *to_gp7101(struct pwm_chip *chip)
++{
++	return container_of(chip, struct gp7101_pwm_chip, chip);
++}
++
++static int gp7101_write_reg(struct gp7101_pwm_chip *gp7101, unsigned int reg, unsigned int val)
++{
++	struct device *dev = gp7101->chip.dev;
++	int err;
++
++	err = regmap_write(gp7101->regmap, reg, val);
++	if (err)
++		dev_err(dev, "regmap_write to register 0x%x failed: %pe\n", reg, ERR_PTR(err));
++
++	return err;
++}
++
++static int gp7101_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
++			     const struct pwm_state *state)
++{
++	int err;
++
++	if (state->polarity != PWM_POLARITY_NORMAL)
++		return -EINVAL;
++
++	if (!state->enabled) {
++		if (pwm->state.enabled) {
++      // TODO
++    }
++		return 0;
++	}
++
++	// err = gp7101_pwm_config(pwm->chip, pwm, state->duty_cycle, state->period);
++  // TODO
++	if (err)
++		return err;
++
++	if (!pwm->state.enabled) {
++		// err = gp71016030_pwm_enable(chip, pwm);
++    // TODO
++  }
++
++	return err;
++}
++
++static const struct pwm_ops gp7101_pwm_ops = {
++	.apply = gp7101_pwm_apply,
++	.owner = THIS_MODULE,
++};
++
++static const struct regmap_config gp7101_regmap_i2c_config = {
++	.reg_bits = 8,
++	.val_bits = 8,
++	.max_register = 0x3,
++	.cache_type = REGCACHE_NONE,
++};
++
++
++static int gp7101_pwm_probe(struct i2c_client *client, 
++    const struct i2c_device_id *id)
++{
++	struct gp7101_pwm_chip *gp7101;
++  int ret;
++
++	gp7101 = devm_kzalloc(&client->dev, sizeof(*gp7101), GFP_KERNEL);
++	if (!gp7101)
++		return -ENOMEM;
++
++  gp7101->regmap = devm_regmap_init_i2c(client, &gp7101_regmap_i2c_config);
++	if (IS_ERR(gp7101->regmap)) {
++		ret = PTR_ERR(gp7101->regmap);
++		dev_err(&client->dev, "Failed to initialize register map: %d\n",
++			ret);
++		return ret;
++	}
++
++	i2c_set_clientdata(client, gp7101);
++
++  gp7101->chip.ops = &gp7101_pwm_ops;
++	gp7101->chip.dev = &client->dev;
++	gp7101->chip.npwm = 1;
++
++	return pwmchip_add(&gp7101->chip);
++}
++
++#ifdef CONFIG_OF
++static const struct of_device_id gp7101_pwm_of_match[] = {
++	{ .compatible = "guestgood,gp7101-pwm" },
++	{ },
++};
++MODULE_DEVICE_TABLE(of, gp7101_pwm_of_match);
++#endif
++
++static struct i2c_driver gp7101_i2c_driver = {
++	.driver = {
++		.name = "gp7101-pwm",
++		.of_match_table = of_match_ptr(gp7101_pwm_of_match),
++	},
++	.probe = gp7101_pwm_probe,
++};
++module_i2c_driver(gp7101_i2c_driver);
++
++MODULE_AUTHOR("Yatao Li <yatao.li@live.com>");
++MODULE_DESCRIPTION("PWM driver for GP7101");
++MODULE_ALIAS("platform:gp7101-pwm");
++MODULE_LICENSE("GPL");
+--- a/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
+@@ -49,13 +49,13 @@
+ 		spi1 = &spi1;
+ 	};
+ 
+-  gpio_fan: gpio-fan {
+-    compatible = "gpio-fan";
+-    gpios = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
+-    /* Using Dummy Speed */
+-    gpio-fan,speed-map = <0 0>, <1 1>;
+-    #cooling-cells = <2>;
+-  };
++  //  gpio_fan: gpio-fan {
++  //    compatible = "gpio-fan";
++  //    gpios = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
++  //    /* Using Dummy Speed */
++  //    gpio-fan,speed-map = <0 0>, <1 1>;
++  //    #cooling-cells = <2>;
++  //  };
+ 
+ 	usb_vbus: usb-vbus {
+ 		compatible = "regulator-fixed";
+@@ -672,7 +672,29 @@
+ };
+ 
+ &i2c2 {
++	clock-frequency = <100000>;
++	i2c-scl-rising-time-ns = <1000>;
++	i2c-scl-falling-time-ns = <300>;
+ 	status = "okay";
++
++  mcp23008: gpio@20 {
++    compatible = "microchip,mcp23008";
++    gpio-controller;
++    #gpio-cells = <2>;
++    reg = <0x20>; // change this if JP1-JP3 are soldered otherwise
++    // XXX IRQ not hooked up
++  };
++
++  ds1307: rtc@68 {
++    compatible = "maxim,ds1307";
++    reg = <0x68>;
++  };
++
++  gp7101: pwm@58 {
++    compatible = "guestgood,gp7101-pwm";
++    reg = <0x58>;
++    #pwm-cells = <1>;
++  };
+ };
+ 
+ &i2c3 {
+@@ -1134,21 +1156,20 @@
+ 	status = "okay";
+ };
+ 
+-
+-&cpu_thermal {
+-       trips {
+-               cpu_active: cpu-active {
+-                       temperature = <60000>; /* millicelsius */
+-                       hysteresis = <2000>; /* millicelsius */
+-                       type = "active";
+-               };
+-       };
+-
+-       cooling-maps {
+-               map {
+-                       trip = <&cpu_active>;
+-                       cooling-device = <&gpio_fan THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+-               };
+-       };
+-};
++//  &cpu_thermal {
++//         trips {
++//                 cpu_active: cpu-active {
++//                         temperature = <60000>; /* millicelsius */
++//                         hysteresis = <2000>; /* millicelsius */
++//                         type = "active";
++//                 };
++//         };
++//  
++//         cooling-maps {
++//                 map {
++//                         trip = <&cpu_active>;
++//                         cooling-device = <&gpio_fan THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++//                 };
++//         };
++//  };
+ 
