@@ -96,14 +96,14 @@
  	depends on TI_MESSAGE_MANAGER
 --- a/drivers/firmware/Makefile
 +++ b/drivers/firmware/Makefile
-@@ -28,6 +28,7 @@ obj-y				+= meson/
- obj-$(CONFIG_GOOGLE_FIRMWARE)	+= google/
- obj-$(CONFIG_EFI)		+= efi/
- obj-$(CONFIG_UEFI_CPER)		+= efi/
+@@ -19,6 +19,7 @@
+ obj-$(CONFIG_RASPBERRYPI_FIRMWARE) += raspberrypi.o
+ obj-$(CONFIG_FW_CFG_SYSFS)	+= qemu_fw_cfg.o
 +obj-$(CONFIG_ROCKCHIP_SIP)	+= rockchip_sip.o
- obj-y				+= imx/
- obj-y				+= psci/
- obj-y				+= smccc/
+ obj-$(CONFIG_QCOM_SCM)		+= qcom-scm.o
+ qcom-scm-objs += qcom_scm.o qcom_scm-smc.o qcom_scm-legacy.o
+ obj-$(CONFIG_SYSFB)		+= sysfb.o
+ obj-$(CONFIG_SYSFB_SIMPLEFB)	+= sysfb_simplefb.o
 --- /dev/null
 +++ b/drivers/firmware/rockchip_sip.c
 @@ -0,0 +1,262 @@

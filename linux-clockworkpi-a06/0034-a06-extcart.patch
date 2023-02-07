@@ -21,7 +21,7 @@
  # CONFIG_PWM_XILINX is not set
 --- a/drivers/pwm/Makefile
 +++ b/drivers/pwm/Makefile
-@@ -17,7 +17,7 @@ obj-$(CONFIG_PWM_CROS_EC)	+= pwm-cros-ec
+@@ -17,6 +17,7 @@ obj-$(CONFIG_PWM_CROS_EC)	+= pwm-cros-ec
  obj-$(CONFIG_PWM_DWC)		+= pwm-dwc.o
  obj-$(CONFIG_PWM_EP93XX)	+= pwm-ep93xx.o
  obj-$(CONFIG_PWM_FSL_FTM)	+= pwm-fsl-ftm.o
@@ -49,9 +49,157 @@
  config PWM_HIBVT
  	tristate "HiSilicon BVT PWM support"
  	depends on ARCH_HISI || COMPILE_TEST
+--- a/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
+@@ -49,14 +49,6 @@
+ 		spi1 = &spi1;
+ 	};
+ 
+-  gpio_fan: gpio-fan {
+-    compatible = "gpio-fan";
+-    gpios = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
+-    /* Using Dummy Speed */
+-    gpio-fan,speed-map = <0 0>, <1 1>;
+-    #cooling-cells = <2>;
+-  };
+-
+ 	usb_vbus: usb-vbus {
+ 		compatible = "regulator-fixed";
+     enable-active-high;
+@@ -263,8 +255,78 @@
+       /*interrupts = <5 IRQ_TYPE_EDGE_FALLING>;*/
+     };
+   };
++
++  pwm_fan: pwm-fan {
++    compatible = "pwm-fan";
++    #cooling-cells = <2>;
++    pwms = <&gp7101 0 255 0>; // <phandle pwm_id period inverted
++    cooling-levels = <0 10 30 50 70 90 110>;
++  };
+ };
+ 
++&cpu_thermal {
++  trips {
++    cpu_active0: cpu_active0 {
++      temperature = <45000>; /* millicelsius */
++      hysteresis = <2000>; /* millicelsius */
++      type = "active";
++    };
++    cpu_active1: cpu_active1 {
++      temperature = <50000>; /* millicelsius */
++      hysteresis = <2000>; /* millicelsius */
++      type = "active";
++    };
++    cpu_active2: cpu_active2 {
++      temperature = <55000>; /* millicelsius */
++      hysteresis = <2000>; /* millicelsius */
++      type = "active";
++    };
++    cpu_active3: cpu_active3 {
++      temperature = <58000>; /* millicelsius */
++      hysteresis = <2000>; /* millicelsius */
++      type = "active";
++    };
++    cpu_active4: cpu_active4 {
++      temperature = <62000>; /* millicelsius */
++      hysteresis = <2000>; /* millicelsius */
++      type = "active";
++    };
++    cpu_active5: cpu_active5 {
++      temperature = <65000>; /* millicelsius */
++      hysteresis = <2000>; /* millicelsius */
++      type = "active";
++    };
++  };
++
++  cooling-maps {
++    map0 {
++      trip = <&cpu_active0>;
++      cooling-device = <&pwm_fan 0 1>;
++    };
++    map1 {
++      trip = <&cpu_active1>;
++      cooling-device = <&pwm_fan 1 2>;
++    };
++    map2 {
++      trip = <&cpu_active2>;
++      cooling-device = <&pwm_fan 2 3>;
++    };
++    map3 {
++      trip = <&cpu_active3>;
++      cooling-device = <&pwm_fan 3 4>;
++    };
++    map4 {
++      trip = <&cpu_active4>;
++      cooling-device = <&pwm_fan 4 5>;
++    };
++    map5 {
++      trip = <&cpu_active5>;
++      cooling-device = <&pwm_fan 5 6>;
++    };
++  };
++};
++
++
+ &cpu_l0 {
+ 	cpu-supply = <&vdd_cpu_l>;
+ };
+@@ -672,7 +734,29 @@
+ };
+ 
+ &i2c2 {
++	clock-frequency = <100000>;
++	i2c-scl-rising-time-ns = <1000>;
++	i2c-scl-falling-time-ns = <300>;
+ 	status = "okay";
++
++  mcp23008: gpio@20 {
++    compatible = "microchip,mcp23008";
++    gpio-controller;
++    #gpio-cells = <2>;
++    reg = <0x20>; // change this if JP1-JP3 are soldered otherwise
++    // XXX IRQ not hooked up
++  };
++
++  ds1307: rtc@68 {
++    compatible = "maxim,ds1307";
++    reg = <0x68>;
++  };
++
++  gp7101: pwm@58 {
++    compatible = "guestgood,gp7101-pwm";
++    reg = <0x58>;
++    #pwm-cells = <2>;
++  };
+ };
+ 
+ &i2c3 {
+@@ -1134,21 +1218,3 @@
+ 	status = "okay";
+ };
+ 
+-
+-&cpu_thermal {
+-       trips {
+-               cpu_active: cpu-active {
+-                       temperature = <60000>; /* millicelsius */
+-                       hysteresis = <2000>; /* millicelsius */
+-                       type = "active";
+-               };
+-       };
+-
+-       cooling-maps {
+-               map {
+-                       trip = <&cpu_active>;
+-                       cooling-device = <&gpio_fan THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+-               };
+-       };
+-};
+-
 --- /dev/null
 +++ b/drivers/pwm/pwm-gp7101.c
-@@ -0,0 +1,131 @@
+@@ -0,0 +1,119 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Driver for GP7101 Generic Pulse Width Modulator
@@ -74,7 +222,6 @@
 +struct gp7101_pwm_chip {
 +	struct pwm_chip chip;
 +	struct regmap *regmap;
-+  u8 duty;
 +};
 +
 +static inline struct gp7101_pwm_chip *to_gp7101(struct pwm_chip *chip)
@@ -97,29 +244,18 @@
 +static int gp7101_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
 +			     const struct pwm_state *state)
 +{
-+	int err;
++  /* gp7101 is fixed frequency so we ignore the period setting here */
++  struct gp7101_pwm_chip* gp7101 = to_gp7101(chip);
++  unsigned long long duty = 0;
 +
 +	if (state->polarity != PWM_POLARITY_NORMAL)
 +		return -EINVAL;
 +
-+	if (!state->enabled) {
-+		if (pwm->state.enabled) {
-+      // TODO
-+    }
-+		return 0;
++	if (state->enabled) {
++    duty = DIV_ROUND_DOWN_ULL(state->duty_cycle * 0xFF, state->period);
 +	}
 +
-+	// err = gp7101_pwm_config(pwm->chip, pwm, state->duty_cycle, state->period);
-+  // TODO
-+	if (err)
-+		return err;
-+
-+	if (!pwm->state.enabled) {
-+		// err = gp71016030_pwm_enable(chip, pwm);
-+    // TODO
-+  }
-+
-+	return err;
++	return gp7101_write_reg(gp7101, 0x03, duty & 0xFF);
 +}
 +
 +static const struct pwm_ops gp7101_pwm_ops = {
@@ -183,94 +319,3 @@
 +MODULE_DESCRIPTION("PWM driver for GP7101");
 +MODULE_ALIAS("platform:gp7101-pwm");
 +MODULE_LICENSE("GPL");
---- a/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
-+++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06.dts
-@@ -49,13 +49,13 @@
- 		spi1 = &spi1;
- 	};
- 
--  gpio_fan: gpio-fan {
--    compatible = "gpio-fan";
--    gpios = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
--    /* Using Dummy Speed */
--    gpio-fan,speed-map = <0 0>, <1 1>;
--    #cooling-cells = <2>;
--  };
-+  //  gpio_fan: gpio-fan {
-+  //    compatible = "gpio-fan";
-+  //    gpios = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
-+  //    /* Using Dummy Speed */
-+  //    gpio-fan,speed-map = <0 0>, <1 1>;
-+  //    #cooling-cells = <2>;
-+  //  };
- 
- 	usb_vbus: usb-vbus {
- 		compatible = "regulator-fixed";
-@@ -672,7 +672,29 @@
- };
- 
- &i2c2 {
-+	clock-frequency = <100000>;
-+	i2c-scl-rising-time-ns = <1000>;
-+	i2c-scl-falling-time-ns = <300>;
- 	status = "okay";
-+
-+  mcp23008: gpio@20 {
-+    compatible = "microchip,mcp23008";
-+    gpio-controller;
-+    #gpio-cells = <2>;
-+    reg = <0x20>; // change this if JP1-JP3 are soldered otherwise
-+    // XXX IRQ not hooked up
-+  };
-+
-+  ds1307: rtc@68 {
-+    compatible = "maxim,ds1307";
-+    reg = <0x68>;
-+  };
-+
-+  gp7101: pwm@58 {
-+    compatible = "guestgood,gp7101-pwm";
-+    reg = <0x58>;
-+    #pwm-cells = <1>;
-+  };
- };
- 
- &i2c3 {
-@@ -1134,21 +1156,20 @@
- 	status = "okay";
- };
- 
--
--&cpu_thermal {
--       trips {
--               cpu_active: cpu-active {
--                       temperature = <60000>; /* millicelsius */
--                       hysteresis = <2000>; /* millicelsius */
--                       type = "active";
--               };
--       };
--
--       cooling-maps {
--               map {
--                       trip = <&cpu_active>;
--                       cooling-device = <&gpio_fan THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
--               };
--       };
--};
-+//  &cpu_thermal {
-+//         trips {
-+//                 cpu_active: cpu-active {
-+//                         temperature = <60000>; /* millicelsius */
-+//                         hysteresis = <2000>; /* millicelsius */
-+//                         type = "active";
-+//                 };
-+//         };
-+//  
-+//         cooling-maps {
-+//                 map {
-+//                         trip = <&cpu_active>;
-+//                         cooling-device = <&gpio_fan THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
-+//                 };
-+//         };
-+//  };
- 
