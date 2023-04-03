@@ -34,53 +34,53 @@
 +	model = "Clockworkpi A06";
 +	compatible = "clockwork,devterm-a06", "rockchip,rk3399";
 +
-+  /*
++	/*
 +	chosen {
 +		bootargs = "earlycon=uart8250,mmio32,0xff1a0000";
 +		stdout-path = "serial2:1500000n8";
 +	};
-+  */
++	*/
 +
-+  reserved-memory {
-+    #address-cells = <2>;
-+    #size-cells = <2>;
-+    ranges;
-+    /* 192KB(0xff8c0000~0xff8f0000) for ddr and ATF */
-+    intmem0: sram@ff8c0000 {
-+      reg = <0 0xff8c0000 0 0x30000>; /* 192k */
-+      no-map;
-+    };
++	reserved-memory {
++		#address-cells = <2>;
++		#size-cells = <2>;
++		ranges;
++		/* 192KB(0xff8c0000~0xff8f0000) for ddr and ATF */
++		intmem0: sram@ff8c0000 {
++			reg = <0 0xff8c0000 0 0x30000>; /* 192k */
++			no-map;
++		};
 +
-+    /* 8KB (0xff3b0000~0xff3b2000) for pmusram */
-+    intmem1: sram@ff3b0000 {
-+      reg = <0 0xff3b0000 0 0x2000>; /* 8k */
-+      no-map;
-+    };
-+  };
++		/* 8KB (0xff3b0000~0xff3b2000) for pmusram */
++		intmem1: sram@ff3b0000 {
++			reg = <0 0xff3b0000 0 0x2000>; /* 8k */
++			no-map;
++		};
++	};
 +
 +	aliases {
 +		spi1 = &spi1;
 +	};
 +
-+  gpio_fan: gpio-fan {
-+    compatible = "gpio-fan";
-+    gpios = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
-+    /* Using Dummy Speed */
-+    gpio-fan,speed-map = <0 0>, <1 1>;
-+    #cooling-cells = <2>;
-+  };
++	gpio_fan: gpio-fan {
++		compatible = "gpio-fan";
++		gpios = <&gpio3 RK_PA0 GPIO_ACTIVE_HIGH>;
++		/* Using Dummy Speed */
++		gpio-fan,speed-map = <0 0>, <1 1>;
++		#cooling-cells = <2>;
++	};
 +
 +	usb_vbus: usb-vbus {
 +		compatible = "regulator-fixed";
-+    enable-active-high;
-+    gpio = <&axp_gpio 0 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
++		gpio = <&axp_gpio 0 GPIO_ACTIVE_HIGH>;
 +		regulator-name = "usb_vbus";
 +		regulator-always-on;
 +		regulator-boot-on;
 +		regulator-min-microvolt = <5000000>;
 +		regulator-max-microvolt = <5000000>;
 +		vin-supply = <&vcc5v0_sys>;
-+    status = "okay";
++		status = "okay";
 +
 +		regulator-state-mem {
 +			regulator-off-in-suspend;
@@ -244,14 +244,14 @@
 +
 +	battery: battery@0 {
 +		compatible = "simple-battery";
-+    device-chemistry = "lithium-ion";
++		device-chemistry = "lithium-ion";
 +		constant-charge-current-max-microamp = <2100000>;
 +		voltage-max-design-microvolt = <4200000>;
 +		re-charge-voltage-microvolt = <4000000>;
-+    // adjust the following params according to your battery specs
++		// adjust the following params according to your battery specs
 +		voltage-min-design-microvolt = <3300000>;
-+    energy-full-design-microwatt-hours = <24790000>; // 2x3350mAh * 3.7v
-+    charge-full-design-microamp-hours = <6700000>; // 2x3350mAh
++		energy-full-design-microwatt-hours = <24790000>; // 2x3350mAh * 3.7v
++		charge-full-design-microamp-hours = <6700000>; // 2x3350mAh
 +	};
 +
 +	ocp8178_backlight: backlight@0 {
@@ -262,20 +262,20 @@
 +		pinctrl-0 = <&backlight_control>;
 +	};
 +
-+  gpio_keys {
-+    compatible = "gpio-keys";
-+    pinctrl-names = "default";
-+    pinctrl-0 = <&pwr_key_l>;
-+    pwr_key {
-+      label = "PWR_KEY_L";
-+      linux,code = <116>; // POWER
-+      debounce-interval = <100>;
-+      wakeup-source;
-+      gpios = <&gpio0 RK_PA5 GPIO_ACTIVE_LOW>;
-+      /*interrupt-parent = <&gpio0>;*/
-+      /*interrupts = <5 IRQ_TYPE_EDGE_FALLING>;*/
-+    };
-+  };
++	gpio_keys {
++		compatible = "gpio-keys";
++		pinctrl-names = "default";
++		pinctrl-0 = <&pwr_key_l>;
++		pwr_key {
++			label = "PWR_KEY_L";
++			linux,code = <116>; // POWER
++			debounce-interval = <100>;
++			wakeup-source;
++			gpios = <&gpio0 RK_PA5 GPIO_ACTIVE_LOW>;
++			/*interrupt-parent = <&gpio0>;*/
++			/*interrupts = <5 IRQ_TYPE_EDGE_FALLING>;*/
++		};
++	};
 +};
 +
 +&cpu_l0 {
@@ -325,15 +325,15 @@
 +};
 +
 +&vpu_mmu {
-+  status = "okay";
++	status = "okay";
 +};
 +
 +&vdec {
-+  status = "okay";
++	status = "okay";
 +};
 +
 +&vdec_mmu {
-+  status = "okay";
++	status = "okay";
 +};
 +
 +&gpu {
@@ -791,16 +791,16 @@
 +			compatible = "x-powers,axp221-ac-power-supply";
 +		};
 +
-+    axp_gpio: gpio {
-+        compatible = "x-powers,axp221-gpio";
-+        gpio-controller;
-+        #gpio-cells = <2>;
++		axp_gpio: gpio {
++			compatible = "x-powers,axp221-gpio";
++			gpio-controller;
++			#gpio-cells = <2>;
 +
-+        gpio0_out: gpio0-out-pin {
-+            pins = "GPIO0";
-+            function = "gpio_out";
-+        };
-+    };
++			gpio0_out: gpio0-out-pin { // axp228 agpio0 originally NC, reroute to usb SY6280
++				pins = "GPIO0";
++				function = "gpio_out";
++			};
++		};
 +	};
 +};
 +
@@ -912,8 +912,8 @@
 +};
 +
 +&u2phy0_host {
-+  phy-supply = <&usb_vbus>;
-+  status = "okay";
++	phy-supply = <&usb_vbus>;
++	status = "okay";
 +};
 +
 +// rockchip,rk3399-dwc3
@@ -923,16 +923,16 @@
 +
 +// u2phy otg provides otg PHY for the type-C port 0
 +&u2phy0_otg {
-+  status = "okay";
++	status = "okay";
 +};
 +
 +&usbdrd_dwc3_0 {
-+  status = "okay";
-+  dr_mode = "peripheral";
-+  // limit to usb2.0, as we won't enable 3.0 phy
-+  maximum-speed = "high-speed";
-+  phys = <&u2phy0_otg>;
-+  phy-names = "usb2-phy";
++	status = "okay";
++	dr_mode = "peripheral";
++	// limit to usb2.0, as we won't enable 3.0 phy
++	maximum-speed = "high-speed";
++	phys = <&u2phy0_otg>;
++	phy-names = "usb2-phy";
 +};
 +
 +&usb_host0_ehci {
@@ -991,7 +991,7 @@
 +		};
 +	};
 +
-+  
++
 +	gpio-keys {
 +		pwr_key_l: gpio-key {
 +			rockchip,pins = <0 RK_PA5 RK_FUNC_GPIO &pcfg_pull_none>;
@@ -1051,12 +1051,12 @@
 +
 +// new!
 +&dfi {
-+  status = "okay";
++	status = "okay";
 +};
 +
 +&dmc {
-+  status = "okay";
-+  center-supply = <&vdd_center>;
++	status = "okay";
++	center-supply = <&vdd_center>;
 +	rockchip,pd-idle-dis-freq-hz = <800000000>;
 +	rockchip,sr-idle-dis-freq-hz = <800000000>;
 +	rockchip,sr-mc-gate-idle-dis-freq-hz = <800000000>;
@@ -1087,15 +1087,15 @@
 +	rockchip,sleep-mode-config = <
 +		(0
 +		| RKPM_SLP_ARMPD
-+    | RKPM_SLP_PERILPPD
-+    | RKPM_SLP_DDR_RET
-+    | RKPM_SLP_PLLPD
-+    | RKPM_SLP_OSC_DIS
-+    | RKPM_SLP_CENTER_PD
-+    | RKPM_SLP_AP_PWROFF
++		| RKPM_SLP_PERILPPD
++		| RKPM_SLP_DDR_RET
++		| RKPM_SLP_PLLPD
++		| RKPM_SLP_OSC_DIS
++		| RKPM_SLP_CENTER_PD
++		| RKPM_SLP_AP_PWROFF
 +		)
 +	>;
-+  // experiment with RKPM_SLP_OSC_DIS
++	// experiment with RKPM_SLP_OSC_DIS
 +
 +	rockchip,pwm-regulator-config = <
 +		(0
@@ -1119,7 +1119,7 @@
 + *
 + * To make extra certain that we don't hit this OVP at suspend time, we'll
 + * transition to a voltage that's much closer to the default (~1.0 V) so that
-+ * there will not be a big jump.  Technically we only need to get within 200 mV
++ * there will not be a big jump.	Technically we only need to get within 200 mV
 + * of the default voltage, but the speed here should be fast enough and we need
 + * suspend/resume to be rock solid.
 + */
@@ -1149,20 +1149,20 @@
 +
 +
 +&cpu_thermal {
-+       trips {
-+               cpu_active: cpu-active {
-+                       temperature = <60000>; /* millicelsius */
-+                       hysteresis = <2000>; /* millicelsius */
-+                       type = "active";
-+               };
-+       };
++	trips {
++		cpu_active: cpu-active {
++		temperature = <60000>; /* millicelsius */
++		hysteresis = <2000>; /* millicelsius */
++		type = "active";
++		};
++	};
 +
-+       cooling-maps {
-+               map {
-+                       trip = <&cpu_active>;
-+                       cooling-device = <&gpio_fan THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
-+               };
-+       };
++	cooling-maps {
++		map {
++		trip = <&cpu_active>;
++		cooling-device = <&gpio_fan THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
 +};
 +
 --- /dev/null
@@ -1180,7 +1180,7 @@
 +
 +		opp00 {
 +			opp-hz = /bits/ 64 <408000000>;
-+      // <target min max>
++			// <target min max>
 +			opp-microvolt = <800000 800000 1250000>;
 +			clock-latency-ns = <40000>;
 +		};

@@ -4,10 +4,10 @@
 # Contributor: Kevin Mihelich <kevin@archlinuxarm.org>
 
 pkgbase=linux-clockworkpi-a06
-_srcname=linux-6.0
+_srcname=linux-6.2
 _kernelname=${pkgbase#linux}
 _desc="Kernel for ClockworkPI A06"
-pkgver=6.0.9
+pkgver=6.2.7
 pkgrel=1
 arch=('aarch64')
 url="http://www.kernel.org/"
@@ -17,7 +17,6 @@ options=('!strip')
 groups=('clockworkpi-a06')
 source=("http://www.kernel.org/pub/linux/kernel/v6.x/${_srcname}.tar.xz"
         "http://www.kernel.org/pub/linux/kernel/v6.x/patch-${pkgver}.xz"
-        '0023-drm-rockchip-support-gamma-control-on-RK3399.patch' # From list: https://patchwork.kernel.org/project/linux-arm-kernel/cover/20211019215843.42718-1-sigmaris@gmail.com/
         '0001-arm64-dts-clockworkpi-a06-dts.patch' # Potentially upstreamable, needs cleanup
         '0002-mfd-axp20x-add-clockworkpi-a06-power-support.patch' # Looks potentially incorrect. Probably not upstreamable
         '0004-gpu-drm-panel-add-cwd686-driver.patch' # Potentially upstreamable, needs cleanup
@@ -30,18 +29,17 @@ source=("http://www.kernel.org/pub/linux/kernel/v6.x/${_srcname}.tar.xz"
         'linux.preset'
         '60-linux.hook'
         '90-linux.hook')
-md5sums=('d681bd1d62d48049a4874646f6774d92'
-         '2ca06d7252389d7f589cd4b136925562'
-         'e2f08e3bc6d1b36e7000233abab1bfc7'
-         'fcd20a0792fd24f489a496302b295fcb'
+md5sums=('787862593d7bf354cf1a5c37e21fc147'
+         'cc007d4bc3599bde532b25501b31fc0a'
+         'a7fe75e37f98cb069a823a280f13cb4f'
          'a4156247d001d9a1f3a25050aecd4f67'
-         '68729a165d157c29fa451b86b01785a9'
+         '997896d383d935c78c5daef3c5cc3dcf'
          '3203d018422505068fc22b909df871aa'
          '1355b2185b2de240c79ef7ca1d4145db'
          '93712e0149c8e292af5f85dc30e5e960'
          'b30f8e848c5936e4a3fc41a64a76a97d'
-         '42e0b9c640985b9a3df0fa1d9db8ac61'
-         '070cfed1f004b90e00e0d3be36c11f1f'
+         'ad9c2097b1d65a5eaa4019f43b3dd0ae'
+         '9628b5bb6ae8ded366c3ec38eab81fbb'
          '86d4a35722b5410e3b29fc92dae15d4b'
          'ce6c81ad1ad1f8b333fd6077d47abdaf'
          '3dc88030a8f2f5a5f97266d99b149f77')
@@ -51,9 +49,6 @@ prepare() {
 
   # add upstream patch
   patch -Np1 -i "${srcdir}/patch-${pkgver}"
-
-  # Manjaro ARM Patches
-  patch -Np1 -i "${srcdir}/0023-drm-rockchip-support-gamma-control-on-RK3399.patch"                     #RK3399
   
   # ClockworkPI DevTerm A06 patches
   patch -Np1 -i "${srcdir}/0001-arm64-dts-clockworkpi-a06-dts.patch"                    # DTS
@@ -83,46 +78,41 @@ prepare() {
 build() {
   cd ${_srcname}
 
-  make_kernel=yes
+  # get kernel version
+  make prepare
 
-  if [ "$make_kernel" == "yes" ] ; then
-    # get kernel version
-    make prepare
+  # load configuration
+  # Configure the kernel. Replace the line below with one of your choice.
+  #make menuconfig # CLI menu for configuration
+  #make nconfig # new CLI menu for configuration
+  #make xconfig # X-based configuration
+  #make oldconfig # using old config from previous kernel version
+  # ... or manually edit .config
 
-    # load configuration
-    # Configure the kernel. Replace the line below with one of your choice.
-    #make menuconfig # CLI menu for configuration
-    #make nconfig # new CLI menu for configuration
-    #make xconfig # X-based configuration
-    #make oldconfig # using old config from previous kernel version
-    # ... or manually edit .config
-    make oldconfig
+  # Copy back our configuration (use with new kernel version)
+  #cp ./.config /var/tmp/${pkgbase}.config
 
-    # Copy back our configuration (use with new kernel version)
-    #cp ./.config /var/tmp/${pkgbase}.config
+  ####################
+  # stop here
+  # this is useful to configure the kernel
+  #msg "Stopping build"
+  #return 1
+  ####################
 
-    ####################
-    # stop here
-    # this is useful to configure the kernel
-    #msg "Stopping build"
-    #return 1
-    ####################
+  #yes "" | make config
 
-    #yes "" | make config
-
-    # build!
-    unset LDFLAGS
-    make ${MAKEFLAGS} Image modules
-  fi
-
+  # build!
+  unset LDFLAGS
+  make ${MAKEFLAGS} Image modules
   # Generate device tree blobs with symbols to support applying device tree overlays in U-Boot
   make ${MAKEFLAGS} DTC_FLAGS="-@" dtbs
 }
 
 _package() {
   pkgdesc="The Linux Kernel and modules - ${_desc}"
-  depends=('coreutils' 'linux-firmware' 'kmod' 'initramfs')
-  optdepends=('crda: to set the correct wireless channels of your country')
+  depends=('coreutils' 'kmod' 'initramfs')
+  optdepends=('crda: to set the correct wireless channels of your country'
+              'linux-firmware: selection of common firmware files')
   provides=('kernel26' "linux=${pkgver}")
   conflicts=('kernel26' 'linux', 'linux-armv8' 'linux-aarch64')
   replaces=()
@@ -182,16 +172,7 @@ _package-headers() {
   conflicts=('linux-headers', 'linux-aarch64-headers')
   replaces=()
 
-  _strip="strip"
-  if [ "$CHOST" == "x86_64-pc-linux-gnu" ] ; then
-    _strip="aarch64-linux-gnu-strip"
-  fi
-
   cd ${_srcname}
-  if [ "$CHOST" == "x86_64-pc-linux-gnu" ] ; then
-    make M=scripts clean
-    echo "Warning: cross-compiling will generate incorrect scripts. Use a chroot build instead for package-headers()!"
-  fi
   local _builddir="${pkgdir}/usr/lib/modules/${_kernver}/build"
 
   install -Dt "${_builddir}" -m644 Makefile .config Module.symvers
@@ -244,16 +225,16 @@ _package-headers() {
   while read -rd '' file; do
     case "$(file -bi "$file")" in
       application/x-sharedlib\;*)      # Libraries (.so)
-        ${_strip} $STRIP_SHARED "$file" ;;
+        strip $STRIP_SHARED "$file" ;;
       application/x-archive\;*)        # Libraries (.a)
-        ${_strip} $STRIP_STATIC "$file" ;;
+        strip $STRIP_STATIC "$file" ;;
       application/x-executable\;*)     # Binaries
-        ${_strip} $STRIP_BINARIES "$file" ;;
+        strip $STRIP_BINARIES "$file" ;;
       application/x-pie-executable\;*) # Relocatable binaries
-        ${_strip} $STRIP_SHARED "$file" ;;
+        strip $STRIP_SHARED "$file" ;;
     esac
   done < <(find "${_builddir}" -type f -perm -u+x ! -name vmlinux -print0 2>/dev/null)
-  ${_strip} $STRIP_STATIC "${_builddir}/vmlinux"
+  strip $STRIP_STATIC "${_builddir}/vmlinux"
   
   # remove unwanted files
   find ${_builddir} -name '*.orig' -delete

@@ -35,7 +35,7 @@ new file mode 100644
 index 000000000..6a0eabf92
 --- /dev/null
 +++ b/drivers/gpu/drm/panel/panel-cwd686.c
-@@ -0,0 +1,301 @@
+@@ -0,0 +1,299 @@
 +/*
 + * SPDX-License-Identifier: GPL-2.0+
 + * Copyright (c) 2021 Clockwork Tech LLC
@@ -309,14 +309,12 @@ index 000000000..6a0eabf92
 +	return 0;
 +}
 +
-+static int cwd686_remove(struct mipi_dsi_device *dsi)
++static void cwd686_remove(struct mipi_dsi_device *dsi)
 +{
 +	struct cwd686 *ctx = mipi_dsi_get_drvdata(dsi);
 +
 +	mipi_dsi_detach(dsi);
 +	drm_panel_remove(&ctx->panel);
-+
-+	return 0;
 +}
 +
 +static const struct of_device_id cwd686_of_match[] = {
