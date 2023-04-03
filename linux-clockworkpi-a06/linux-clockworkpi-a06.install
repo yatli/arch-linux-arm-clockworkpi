@@ -12,6 +12,9 @@ post_install() {
     echo '    mkinitcpio -p linux-clockworkpi-a06'
     echo 'You will need to change these back manually if you uninstall this kernel'
   fi
+  echo 'DevTerm ExtCart Users:'
+  echo 'Please add the following line to your /boot/extlinux/extlinux.conf:'
+  echo 'FDTOVERLAYS /boot/overlays/rk3399-clockworkpi-a06-extcart.dtbo'
 }
 
 post_upgrade() {

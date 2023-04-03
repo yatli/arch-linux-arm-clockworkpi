@@ -31,15 +31,15 @@ source=("http://www.kernel.org/pub/linux/kernel/v6.x/${_srcname}.tar.xz"
         '90-linux.hook')
 md5sums=('787862593d7bf354cf1a5c37e21fc147'
          'cc007d4bc3599bde532b25501b31fc0a'
-         'a7fe75e37f98cb069a823a280f13cb4f'
+         '3cc95468ca7bec77c331783a4f630fef'
          'a4156247d001d9a1f3a25050aecd4f67'
          '997896d383d935c78c5daef3c5cc3dcf'
          '3203d018422505068fc22b909df871aa'
          '1355b2185b2de240c79ef7ca1d4145db'
          '93712e0149c8e292af5f85dc30e5e960'
          'b30f8e848c5936e4a3fc41a64a76a97d'
-         'ad9c2097b1d65a5eaa4019f43b3dd0ae'
-         '9628b5bb6ae8ded366c3ec38eab81fbb'
+         '5c941037b5fb982817d92c7232240d52'
+         '83710fd33b424c136725029cf97fd8b7'
          '86d4a35722b5410e3b29fc92dae15d4b'
          'ce6c81ad1ad1f8b333fd6077d47abdaf'
          '3dc88030a8f2f5a5f97266d99b149f77')
@@ -50,6 +50,8 @@ prepare() {
   # add upstream patch
   patch -Np1 -i "${srcdir}/patch-${pkgver}"
   
+  cat "${srcdir}/config" > ./.config
+
   # ClockworkPI DevTerm A06 patches
   patch -Np1 -i "${srcdir}/0001-arm64-dts-clockworkpi-a06-dts.patch"                    # DTS
   patch -Np1 -i "${srcdir}/0002-mfd-axp20x-add-clockworkpi-a06-power-support.patch"     # Battery/Charger
@@ -62,8 +64,6 @@ prepare() {
 # patch -Np1 -i "${srcdir}/0032-a06-battery-adjust.patch"
 
   patch -Np1 -i "${srcdir}/0033-a06-rk3399-dmc-optimize.patch"
-
-  cat "${srcdir}/config" > ./.config
 
 # CAUTION: for devterm-ext-cart only
   patch -Np1 -i "${srcdir}/0034-a06-extcart.patch"
@@ -132,6 +132,9 @@ _package() {
   make INSTALL_MOD_PATH="${pkgdir}/usr" modules_install
   make INSTALL_DTBS_PATH="${pkgdir}/boot/dtbs" dtbs_install
   cp arch/$KARCH/boot/Image "${pkgdir}/boot"
+  # yatli: devterm extcart overlay
+  mkdir -p "${pkgdir}"/boot/overlays
+  cp arch/$KARCH/boot/dts/rockchip/rk3399-clockworkpi-a06-extcart.dtbo "${pkgdir}/boot/overlays/"
 
   # make room for external modules
   local _extramodules="extramodules-${_basekernel}${_kernelname}"
