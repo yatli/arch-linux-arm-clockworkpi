@@ -11,7 +11,7 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-ficus.dtb
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06-extcart.dts
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,107 @@
 +/*
 + * SPDX-License-Identifier: (GPL-2.0+ or MIT)
 + * Copyright (c) 2023 Yatao Li <me@yatao.info>
@@ -93,6 +93,8 @@
 +};
 +
 +&i2c2 {
++	#address-cells = <1>;
++	#size-cells = <0>;
 +	clock-frequency = <100000>;
 +	i2c-scl-rising-time-ns = <1000>;
 +	i2c-scl-falling-time-ns = <300>;
