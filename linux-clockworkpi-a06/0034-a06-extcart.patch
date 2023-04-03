@@ -11,7 +11,7 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-ficus.dtb
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06-extcart.dts
-@@ -0,0 +1,107 @@
+@@ -0,0 +1,110 @@
 +/*
 + * SPDX-License-Identifier: (GPL-2.0+ or MIT)
 + * Copyright (c) 2023 Yatao Li <me@yatao.info>
@@ -21,12 +21,15 @@
 +/dts-v1/;
 +/plugin/;
 +
-+/ {
++&{/} {
 +	pwm_fan: pwm-fan {
 +		compatible = "pwm-fan";
 +		#cooling-cells = <2>;
 +		pwms = <&gp7101 0 255 0>; // <phandle pwm_id period inverted
 +		cooling-levels = <0 10 30 50 70 90 110>;
++	};
++	gpio_fan {
++		status = "disabled";
 +	};
 +};
 +
