@@ -11,7 +11,7 @@
  dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3399-ficus.dtb
 --- /dev/null
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-clockworkpi-a06-extcart.dts
-@@ -0,0 +1,110 @@
+@@ -0,0 +1,145 @@
 +/*
 + * SPDX-License-Identifier: (GPL-2.0+ or MIT)
 + * Copyright (c) 2023 Yatao Li <me@yatao.info>
@@ -31,38 +31,73 @@
 +	gpio_fan {
 +		status = "disabled";
 +	};
++
++  // cart devicetree overlays should declare power connections to these regulators
++	ext_3v3: ext-3v3 {
++		compatible = "regulator-fixed";
++		enable-active-high;
++		gpio = <&gpio3 6 GPIO_ACTIVE_HIGH>; // IO36
++		regulator-name = "usb_vbus";
++		regulator-always-on;
++		regulator-boot-on;
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++		vin-supply = <&reg_dldo2>; // dldo2 dldo3 dldo4
++		status = "okay";
++
++		regulator-state-mem {
++			regulator-off-in-suspend;
++		};
++	};
++
++	ext_5v: ext-5v {
++		compatible = "regulator-fixed";
++		enable-active-high;
++		gpio = <&gpio3 6 GPIO_ACTIVE_HIGH>; // IO36
++		regulator-name = "usb_vbus";
++		regulator-always-on;
++		regulator-boot-on;
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		vin-supply = <&vcc5v0_sys>;
++		status = "okay";
++
++		regulator-state-mem {
++			regulator-off-in-suspend;
++		};
++	};
 +};
 +
 +&cpu_thermal {
 +	trips {
 +		cpu_active: cpu_active {
-+			temperature = <45000>; /* millicelsius */
-+			hysteresis = <5000>; /* millicelsius */
++			temperature = <55000>; /* millicelsius */
++			hysteresis = <2000>; /* millicelsius */
 +			type = "active";
 +		};
 +		cpu_active1: cpu_active1 {
-+			temperature = <50000>; /* millicelsius */
-+			hysteresis = <5000>; /* millicelsius */
++			temperature = <56000>; /* millicelsius */
++			hysteresis = <3000>; /* millicelsius */
 +			type = "active";
 +		};
 +		cpu_active2: cpu_active2 {
-+			temperature = <55000>; /* millicelsius */
-+			hysteresis = <5000>; /* millicelsius */
++			temperature = <58000>; /* millicelsius */
++			hysteresis = <4000>; /* millicelsius */
 +			type = "active";
 +		};
 +		cpu_active3: cpu_active3 {
-+			temperature = <58000>; /* millicelsius */
++			temperature = <60000>; /* millicelsius */
 +			hysteresis = <5000>; /* millicelsius */
 +			type = "active";
 +		};
 +		cpu_active4: cpu_active4 {
 +			temperature = <62000>; /* millicelsius */
-+			hysteresis = <5000>; /* millicelsius */
++			hysteresis = <8000>; /* millicelsius */
 +			type = "active";
 +		};
 +		cpu_active5: cpu_active5 {
 +			temperature = <65000>; /* millicelsius */
-+			hysteresis = <5000>; /* millicelsius */
++			hysteresis = <8000>; /* millicelsius */
 +			type = "active";
 +		};
 +	};
