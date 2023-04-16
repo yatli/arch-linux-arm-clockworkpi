@@ -1,0 +1,20 @@
+# rkbin-aarch64-hack: Allows running Rockchip rkbin tools on aarch64
+
+pkgname=rkbin-aarch64-hack
+pkgver=1
+pkgrel=1
+pkgdesc="Allows running Rockchip rkbin tools on aarch64"
+arch=('aarch64')
+license=('GPL')
+depends=('qemu-user')
+source=("libc.so.6"
+        "ld-linux-x86-64.so.2")
+sha256sums=('b92d5a7139b8d9321ed30cb571ece6000eb0ded922aafef08e4adc5b071ee124'
+            'ad2bfa490c76b411052cca2f0701a064bb1eec1e6f305b06f694568fc244f86d')
+
+package() {
+  mkdir -p "${pkgdir}/usr/lib/glibc-hwcaps/x86-64-v3"
+  mkdir -p "${pkgdir}/lib64"
+  cp "${srcdir}/libc.so.6" "${pkgdir}/usr/lib/glibc-hwcaps/x86-64-v3/"
+  cp "${srcdir}/ld-linux-x86-64.so.2" "${pkgdir}/lib64/"
+}
