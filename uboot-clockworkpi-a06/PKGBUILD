@@ -22,11 +22,12 @@ source=("https://ftp.denx.de/pub/u-boot/u-boot-${pkgver/rc/-rc}.tar.bz2"
         "0001-uboot-clockworkpi-a06.patch"
         "0002-pgwipeout-mmc-sdhci-sdma-spl.patch"
         "0003-RKTRUST.patch")
-sha256sums=('SKIP'
-            'SKIP'
-            'SKIP'
-            'SKIP'
-            'SKIP')
+# mainline ATF: "https://github.com/rockchip-linux/rkbin/archive/refs/heads/master.zip"
+sha256sums=('68e065413926778e276ec3abd28bb32fa82abaa4a6898d570c1f48fbdb08bcd0'
+            'b9fa37c39ef6005df83de035567a1b988c36cfc41fc17f012c8c133fd8638996'
+            '7e409c95d72dd1f54b88d56c00dd1cf44875f4c9eb0b90a37dfb75b863aff415'
+            '971ec97e7e4b15cb2731db51b54f80802d933f5a416dbfd64f8149a0bb066dc6'
+            '2d2cda003764fdb8030814005b26bf74e928ec884440c18ad07edad2ebff52ee')
 
 prepare() {
   cd u-boot-${pkgver/rc/-rc}
@@ -53,8 +54,21 @@ build() {
 
   unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
 
-# RKBIN version
+# RKBIN TFA
+  echo -e "\nUsing closed-source TF-A from Rockchip...\n"
   cp -v ${srcdir}/rkbin-master/bin/rk33/rk3399_bl31_v1.35.elf ${srcdir}/u-boot-${pkgver/rc/-rc}/bl31.elf
+
+# mainline TFA
+# echo -e "\nBuilding TF-A for ClockworkPI A06...\n"
+
+# DEBUG version
+# make PLAT=rk3399 LOG_LEVEL=50 DEBUG=1 V=1
+# cp -v build/rk3399/debug/bl31/bl31.elf ${srcdir}/u-boot-${pkgver/rc/-rc}/bl31.elf
+
+# RELEASE version
+# make PLAT=rk3399
+# cp -v build/rk3399/release/bl31/bl31.elf ${srcdir}/u-boot-${pkgver/rc/-rc}/bl31.elf
+
   cd ${srcdir}/u-boot-${pkgver/rc/-rc}
 
   echo -e "\nBuilding U-Boot for ClockworkPI A06...\n"
