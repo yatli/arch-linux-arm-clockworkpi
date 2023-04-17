@@ -6,12 +6,10 @@ License: LGPL-2.1
 
 # Introduction
 
-This document will walk you through installing [Arch Linux ARM](https://archlinuxarm.org/) on the DevTerm A06. At the
-time of writing, only Armbian is supported on the DevTerm.
+This document will walk you through installing [Arch Linux ARM](https://archlinuxarm.org/) on the DevTerm A06.
 
-We will create a root file system based on the **rock64** architecture (rk3328). This will include patching our
-bootloader and kernel with the patches provided by ClockworkPi. Technically, the DevTerm A06's architecture is based on
-the rk3399.
+We will create a root file system based on the **rock64** architecture (rk3328), which the A06 is based on. This will include patching our
+bootloader and kernel with the patches provided by ClockworkPi.
 
 ## Quickstart
 
@@ -47,7 +45,7 @@ We will start by creating an ARM chroot environment to build our root filesystem
 1. Install the required packages
 
 ```
-$ yay -S base-devel binfmt-qemu-static qemu-user-static arch-install-scripts
+$ yay -S base-devel qemu-user-static-binfmt qemu-user-static arch-install-scripts wget
 
 # systemctl restart systemd-binfmt.service
 ```
@@ -231,6 +229,7 @@ ClockworkPi [here](https://github.com/clockworkpi/DevTerm/tree/main/Code/patch/a
 1. Inside the `alarm` home folder of your `aarch64` chroot environment, clone this repository
 
 ```
+$ cd
 $ git clone https://github.com/css459/arch-linux-arm-clockworkpi-a06.git
 $ cd arch-linux-arm-clockworkpi-a06
 ```
@@ -287,7 +286,7 @@ $ exit
 ### Unmount The Root Filesystem
 
 ```
- # umonut root
+ # unmount root
 ```
 
 # Tar The Root Filesystem
@@ -318,13 +317,13 @@ in place of theirs.
 1. Zero the beginning of the SD card
 
 ```
-# dd if=/dev/zero of=/dev/sdX bs=1M count=32
+# dd if=/dev/zero of=/dev/mmcblkX bs=1M count=32
 ```
 
 2. Start fdisk to partition the SD card
 
 ```
-# fdisk /dev/sdX
+# fdisk /dev/mmcblkX
 ```
 
 3. Inside fdisk,
@@ -338,18 +337,19 @@ in place of theirs.
 4. Create the **ext4** filesystem **without a Journal**
 
 ```
-# mkfs.ext4 -L ROOT_ARCH -O ^has_journal /dev/sdX1
+# mkfs.ext4 -L ROOT_ARCH -O ^has_journal /dev/mmcblkXp1
 ```
 
 **NOTE:** Disabling the journal is helpful for simple flash devices
 like SD Cards to reduce successive writes. In rare cases, your filesystem
 may become corrupted, which may arise as a **boot loop**. Running 
-`fsck -y /dev/sdX1` on an external system can fix this issue.  
+`fsck -y /dev/mmcblkXp1` on an external system can fix this issue.  
 
 5. Mount the filesystem
 
 ```
-# mount /dev/sdX1 /mnt
+# mkdir /mnt/
+# mount /dev/mmcblkX /mnt
 ```
 
 6. Install the root filesystem (as root not via sudo)
@@ -364,8 +364,9 @@ may become corrupted, which may arise as a **boot loop**. Running
 
 ```
 # cd /mnt/boot
-# dd if=idbloader.img of=/dev/sdX seek=64 conv=notrunc,fsync
-# dd if=u-boot.itb of=/dev/sdX seek=16384 conv=notrunc,fsync
+# dd if=idbloader.img of=/dev/mmcblkX seek=64 conv=notrunc,fsync
+# dd if=uboot.img of=/dev/mmcblkX seek=16384 conv=notrunc,fsync
+# dd if=trust.img of=/dev/mmcblkX seek=24576 conv=notrunc,fsync
 ```
 
 8. Unmount and eject the SD card
@@ -373,7 +374,7 @@ may become corrupted, which may arise as a **boot loop**. Running
 ```
 # cd
 # umount /mnt
-# eject /dev/sdX
+# eject /dev/mmcblkX
 ```
 
 ## Done!
