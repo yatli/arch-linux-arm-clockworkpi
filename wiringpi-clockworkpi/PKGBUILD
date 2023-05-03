@@ -1,6 +1,6 @@
 # Maintainer: lonewsk <lwsk -at- nodot.fr>
 pkgname=wiringpi-clockworkpi
-pkgver=262.779b44f
+pkgver=268.01518d7
 pkgrel=1
 pkgdesc="Arduino wiring-like library written in C for RaspberryPi."
 url="http://wiringpi.com/"
