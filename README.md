@@ -1,6 +1,7 @@
 # Arch Linux ARM for the ClockworkPi DevTerm A06
 
 Maintainer: Yatao Li
+
 Origianl Author: Cole Smith
 
 License: LGPL-2.1
