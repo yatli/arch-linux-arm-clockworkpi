@@ -125,7 +125,7 @@ For this section, **all commands will be run inside the chroot**.
 5. Set `fstab`
 
 ```
-# echo 'LABEL=ROOT_ARCH    /    f2fs    defaults    0    0' >> /etc/fstab
+# echo 'LABEL=ROOT_ARCH    /    f2fs    defaults,noatime    0    0' >> /etc/fstab
 # echo 'LABEL=BOOT_ARCH    /boot    ext4    defaults    0    0' >> /etc/fstab
 ```
 
@@ -341,15 +341,20 @@ but use our tarball in place of theirs.
     1. Type **o**. This will clear out any partitions on the drive
     2. Type **p** to list partitions. There should be no partitions left
     3. Type **n**, then **p** for primary, **1** for the first partition on the drive, **32768** for the first sector
-    4. Type **+4G** to create the boot partition of 4GB.
-    5. Type **n**, **p**, **2** to create the root partition. Press ENTER to accept the default first/last sector
+    4. Type **+2G** to create the boot partition of 2GB.
+    5. Type **n**, **p**, **2** to create the swap partition. Press ENTER to accept the default first sector.
+    6. Type **+4G** to create the swap partition of 4GB. (In the hope that we get full hibernation support one day)
+    5. Type **n**, **p**, **3** to create the root partition. Press ENTER to accept the default first/last sector
     6. Write the partition table and exit by typing **w**
 
 4. Create the **ext4** filesystem **without a Journal** for boot, and **f2fs** filesystem for root
 
 ```
 # mkfs.ext4 -L BOOT_ARCH -O ^has_journal /dev/sdX1
-# mkfs.f2fs -L ROOT_ARCH -O extra_attr,inode_checksum,sb_checksum /dev/sdX2
+# mkswap /dev/sdX2
+# mkfs.f2fs -L ROOT_ARCH -O extra_attr,inode_checksum,sb_checksum /dev/sdX3
+# blkid /dev/sdX2 # Note down the UUID
+# echo 'UUID="<UUID in previous command here>" none  swap  sw  0 0' >> /etc/fstab
 ```
 
 **NOTE:** Disabling the journal is helpful for simple flash devices like SD Cards to reduce successive writes.
