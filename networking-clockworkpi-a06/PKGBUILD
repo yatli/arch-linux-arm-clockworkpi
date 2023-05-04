@@ -14,7 +14,7 @@ source=("https://github.com/armbian/firmware/raw/master/brcm/brcmfmac43456-sdio.
         "https://github.com/armbian/firmware/raw/master/brcm/brcmfmac43456-sdio.bin"
         "https://github.com/armbian/firmware/raw/master/brcm/BCM4345C5.hcd")
 md5sums=('046a0d584bab0d2f774ba9f722a175f9'
-         'f77e38b143174bae5f91be2bd27a7d3f'
+	 'ca63a118d10e69d0f84d8e06bbbe9d4f'
          'fc394331d03baa5847e2b5de94ffbc9b')
 
 package() {
