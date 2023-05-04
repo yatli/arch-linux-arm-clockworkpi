@@ -283,6 +283,11 @@ $ MAKEFLAGS="-j$(nproc)" makepkg -si
 $ cd ..
 ```
 
+### Clean up the build dependencies
+```
+# pacman -Rs base-devel git vim wget ranger rkbin-aarch64-hack xmlto docbook-xsl inetutils bc dtc
+```
+
 ### Exit the chroot
 
 1. Exit `alarm`
@@ -306,9 +311,11 @@ $ exit
 # Tar The Root Filesystem
 
 We are now ready to package up the root filesystem into a compressed tarball.
+Optionally, we can save the built packages.
 
 ```
  # cd root
+ # mv home/alarm/arch-linux-arm-clockworkpi-a06 ../
  # tar cpJf ../arch-linux-clockworkpi-a06-root-fs.tar.xz .
  # cd ..
 ```
