@@ -286,6 +286,7 @@ $ cd ..
 ### Clean up the build dependencies
 ```
 # pacman -Rs base-devel git vim wget ranger rkbin-aarch64-hack xmlto docbook-xsl inetutils bc dtc
+# rm /var/cache/pacman/pkg/*.pkg.tar.xz*
 ```
 
 ### Exit the chroot
