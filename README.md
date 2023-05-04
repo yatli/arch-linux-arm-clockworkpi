@@ -15,7 +15,8 @@ bootloader and kernel with the patches provided by ClockworkPi. Technically, the
 the rk3399.
 
 ## Caution
-If you are running advanced filesystems on your host (for example `zfs`), don’t try to prepare the image yourself. mkinitcpio in chroot doesn’t like that, and may cause damage to your host filesystem. Please use a virtual machine, or use a prebuilt image instead.
+If you are running advanced filesystems on your host (for example `zfs`), don’t try to prepare the image on that host. 
+`mkinitcpio` in chroot doesn’t like that, and may cause damage to your host filesystem. Please use a virtual machine, or use a prebuilt image instead.
 
 ## Quickstart
 
