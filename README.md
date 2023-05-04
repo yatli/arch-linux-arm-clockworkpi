@@ -273,6 +273,23 @@ $ cd ..
 **NOTE: DO NOT INSTALL THE BOOTLOADER TO THE DISK WHEN ASKED AFTER THIS STEP.** We will do this ourselves when we
 prepare the SD card.
 
+
+**Note:** Since we are going to use a separate boot partition, edit the file `/boot/extlinux/extlinux.conf`.
+Original:
+```
+LABEL Arch ARM
+KERNEL /boot/Image
+FDT /boot/dtbs/rockchip/rk3399-clockworkpi-a06.dtb
+APPEND initrd=/boot/initramfs-linux.img console=ttyS2,1500000 root=LABEL=ROOT_ARCH rw rootwait audit=0
+```
+Updated:
+```
+LABEL Arch ARM
+KERNEL /Image
+FDT /dtbs/rockchip/rk3399-clockworkpi-a06.dtb
+APPEND initrd=/initramfs-linux.img console=ttyS2,1500000 root=LABEL=ROOT_ARCH rw rootwait audit=0
+```
+
 ### Compiling Additional Packages
 
 For each additional package directory in this repository
