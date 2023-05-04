@@ -23,6 +23,7 @@ package() {
 	msg2 "Creating skeleton dirs..."
 	mkdir -p "${pkgdir}"/{usr/lib,usr/bin}
 	cd $srcdir/DevTerm/Code/devterm_wiringpi_cpi
+  cp wiringPi/*.h devLib/
 	sed -i 's|$sudo make uninstall||g' build
 	sed -i "s| make| make DESTDIR=\"${pkgdir}/usr\" PREFIX=\"\" LDCONFIG=\"\"|g" build
 	msg2 "Running wiringPi build/package script..."
