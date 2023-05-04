@@ -8,8 +8,7 @@ License: LGPL-2.1
 
 # Introduction
 
-This document will walk you through installing [Arch Linux ARM](https://archlinuxarm.org/) on the DevTerm A06. At the
-time of writing, only Armbian is supported on the DevTerm.
+This document will walk you through installing [Arch Linux ARM](https://archlinuxarm.org/) on the DevTerm A06.
 
 We will create a root file system based on the **rock64** architecture (rk3328). This will include patching our
 bootloader and kernel with the patches provided by ClockworkPi. Technically, the DevTerm A06's architecture is based on
