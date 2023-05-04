@@ -15,6 +15,9 @@ We will create a root file system based on the **rock64** architecture (rk3328).
 bootloader and kernel with the patches provided by ClockworkPi. Technically, the DevTerm A06's architecture is based on
 the rk3399.
 
+## Caution
+If you are running advanced filesystems on your host (for example `zfs`), don’t try to prepare the image yourself. mkinitcpio in chroot doesn’t like that, and may cause damage to your host filesystem. Please use a virtual machine, or use a prebuilt image instead.
+
 ## Quickstart
 
 Pre-built root filesystem(s) are provided in the **Releases** tab. Skip to the **Prepare the SD Card** section if using
