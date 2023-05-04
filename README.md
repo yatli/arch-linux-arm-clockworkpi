@@ -125,7 +125,8 @@ For this section, **all commands will be run inside the chroot**.
 5. Set `fstab`
 
 ```
-# echo 'LABEL=ROOT_ARCH    /    ext4    defaults    0    0' >> /etc/fstab
+# echo 'LABEL=ROOT_ARCH    /    f2fs    defaults    0    0' >> /etc/fstab
+# echo 'LABEL=BOOT_ARCH    /boot    ext4    defaults    0    0' >> /etc/fstab
 ```
 
 6. Set the time using `timedatectl`. To list supported timezones: `timedatectl list-timezones`
@@ -231,7 +232,7 @@ ClockworkPi [here](https://github.com/clockworkpi/DevTerm/tree/main/Code/patch/a
 1. Inside the `alarm` home folder of your `aarch64` chroot environment, clone this repository
 
 ```
-$ git clone https://github.com/css459/arch-linux-arm-clockworkpi-a06.git
+$ git clone https://github.com/yatli/arch-linux-arm-clockworkpi-a06.git
 $ cd arch-linux-arm-clockworkpi-a06
 ```
 
@@ -249,7 +250,15 @@ $ cd ..
 
 ### Compiling U-Boot
 
-1. Build the package, similar to above.
+1. Build the rkbin helper, which allows us to run rockchip-supplied, x64-only, image packing tool for uboot.
+
+```
+$ cd rkbin-aarch64-hack
+$ MAKEFLAGS="-j$(nproc)" makepkg -si 
+$ cd ..
+```
+
+2. Build the package, similar to above.
 
 ```
 $ cd uboot-clockworkpi-a06 
@@ -312,8 +321,8 @@ Change ownership of the tarball and exit the `root` account
 ## Prepare the SD Card
 
 We will now put our prepared filesystem onto the SD card. We will follow
-[Arch Linux ARM's guide for the rock64](https://archlinuxarm.org/platforms/armv8/rockchip/rock64), but use our tarball
-in place of theirs.
+[Arch Linux ARM's guide for the rock64](https://archlinuxarm.org/platforms/armv8/rockchip/rock64) (except that we use f2fs for root, instead of ext4),
+but use our tarball in place of theirs.
 
 1. Zero the beginning of the SD card
 
@@ -332,24 +341,27 @@ in place of theirs.
     1. Type **o**. This will clear out any partitions on the drive
     2. Type **p** to list partitions. There should be no partitions left
     3. Type **n**, then **p** for primary, **1** for the first partition on the drive, **32768** for the first sector
-    4. Press ENTER to accept the default last sector
-    5. Write the partition table and exit by typing **w**
+    4. Type **+4G** to create the boot partition of 4GB.
+    5. Type **n**, **p**, **2** to create the root partition. Press ENTER to accept the default first/last sector
+    6. Write the partition table and exit by typing **w**
 
-4. Create the **ext4** filesystem **without a Journal**
+4. Create the **ext4** filesystem **without a Journal** for boot, and **f2fs** filesystem for root
 
 ```
-# mkfs.ext4 -L ROOT_ARCH -O ^has_journal /dev/sdX1
+# mkfs.ext4 -L BOOT_ARCH -O ^has_journal /dev/sdX1
+# mkfs.f2fs -L ROOT_ARCH -O extra_attr,inode_checksum,sb_checksum /dev/sdX2
 ```
 
-**NOTE:** Disabling the journal is helpful for simple flash devices
-like SD Cards to reduce successive writes. In rare cases, your filesystem
-may become corrupted, which may arise as a **boot loop**. Running 
-`fsck -y /dev/sdX1` on an external system can fix this issue.  
+**NOTE:** Disabling the journal is helpful for simple flash devices like SD Cards to reduce successive writes.
+In rare cases, your filesystem may become corrupted, which may arise as a boot loop.
+Running `fsck -y /dev/sdX1` on an external system can fix this issue.
 
 5. Mount the filesystem
 
 ```
-# mount /dev/sdX1 /mnt
+# mount /dev/sdX2 /mnt
+# mkdir -p /mnt/boot
+# mount /dev/sdX1 /mnt/boot
 ```
 
 6. Install the root filesystem (as root not via sudo)
@@ -365,13 +377,15 @@ may become corrupted, which may arise as a **boot loop**. Running
 ```
 # cd /mnt/boot
 # dd if=idbloader.img of=/dev/sdX seek=64 conv=notrunc,fsync
-# dd if=u-boot.itb of=/dev/sdX seek=16384 conv=notrunc,fsync
+# dd if=uboot.img of=/dev/sdX seek=16384 conv=notrunc,fsync
+# dd if=trust.img of=/dev/sdX seek=24576 conv=notrunc,fsync
 ```
 
 8. Unmount and eject the SD card
 
 ```
 # cd
+# umount /mnt/boot
 # umount /mnt
 # eject /dev/sdX
 ```
