@@ -1,5 +1,0 @@
-post_install() {
-	echo 'Enabling and Starting Fan Daemon...'
-	systemctl enable devterm-fan-temp-daemon-a06
-	systemctl start devterm-fan-temp-daemon-a06
-}
