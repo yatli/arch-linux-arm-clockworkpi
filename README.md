@@ -304,6 +304,7 @@ $ cd ..
 ```
 # pacman -Rs base-devel git vim wget ranger rkbin-aarch64-hack xmlto docbook-xsl inetutils bc dtc
 # rm /var/cache/pacman/pkg/*.pkg.tar.xz*
+# rm /home/alarm/gcc*
 ```
 
 ### Exit the chroot
