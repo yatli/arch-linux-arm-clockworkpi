@@ -1,15 +1,22 @@
 # Arch Linux ARM for the ClockworkPi DevTerm A06
 
-Author: Cole Smith
+Maintainer: Yatao Li
+
+Origianl Author: Cole Smith
 
 License: LGPL-2.1
 
 # Introduction
 
-This document will walk you through installing [Arch Linux ARM](https://archlinuxarm.org/) on the DevTerm A06.
+This document will walk you through installing [Arch Linux ARM](https://archlinuxarm.org/) on the DevTerm A06. At the
+time of writing, only Armbian is supported on the DevTerm.
 
-We will create a root file system based on the **rock64** architecture (rk3328), which the A06 is based on. This will include patching our
-bootloader and kernel with the patches provided by ClockworkPi.
+We will create a root file system based on the **rock64** architecture (rk3328). This will include patching our
+bootloader and kernel with the patches provided by ClockworkPi. Technically, the DevTerm A06's architecture is based on
+the rk3399.
+
+## Caution
+If you are running advanced filesystems on your host (for example `zfs`), don’t try to prepare the image yourself. mkinitcpio in chroot doesn’t like that, and may cause damage to your host filesystem. Please use a virtual machine, or use a prebuilt image instead.
 
 ## Quickstart
 
@@ -45,7 +52,7 @@ We will start by creating an ARM chroot environment to build our root filesystem
 1. Install the required packages
 
 ```
-$ yay -S base-devel qemu-user-static-binfmt qemu-user-static arch-install-scripts wget
+$ yay -S base-devel binfmt-qemu-static qemu-user-static arch-install-scripts
 
 # systemctl restart systemd-binfmt.service
 ```
@@ -123,7 +130,8 @@ For this section, **all commands will be run inside the chroot**.
 5. Set `fstab`
 
 ```
-# echo 'LABEL=ROOT_ARCH    /    ext4    defaults    0    0' >> /etc/fstab
+# echo 'LABEL=ROOT_ARCH    /    f2fs    defaults,noatime    0    0' >> /etc/fstab
+# echo 'LABEL=BOOT_ARCH    /boot    ext4    defaults    0    0' >> /etc/fstab
 ```
 
 6. Set the time using `timedatectl`. To list supported timezones: `timedatectl list-timezones`
@@ -229,8 +237,7 @@ ClockworkPi [here](https://github.com/clockworkpi/DevTerm/tree/main/Code/patch/a
 1. Inside the `alarm` home folder of your `aarch64` chroot environment, clone this repository
 
 ```
-$ cd
-$ git clone https://github.com/css459/arch-linux-arm-clockworkpi-a06.git
+$ git clone https://github.com/yatli/arch-linux-arm-clockworkpi-a06.git
 $ cd arch-linux-arm-clockworkpi-a06
 ```
 
@@ -248,7 +255,15 @@ $ cd ..
 
 ### Compiling U-Boot
 
-1. Build the package, similar to above.
+1. Build the rkbin helper, which allows us to run rockchip-supplied, x64-only, image packing tool for uboot.
+
+```
+$ cd rkbin-aarch64-hack
+$ MAKEFLAGS="-j$(nproc)" makepkg -si 
+$ cd ..
+```
+
+2. Build the package, similar to above.
 
 ```
 $ cd uboot-clockworkpi-a06 
@@ -286,7 +301,7 @@ $ exit
 ### Unmount The Root Filesystem
 
 ```
- # unmount root
+ # umonut root
 ```
 
 # Tar The Root Filesystem
@@ -311,19 +326,19 @@ Change ownership of the tarball and exit the `root` account
 ## Prepare the SD Card
 
 We will now put our prepared filesystem onto the SD card. We will follow
-[Arch Linux ARM's guide for the rock64](https://archlinuxarm.org/platforms/armv8/rockchip/rock64), but use our tarball
-in place of theirs.
+[Arch Linux ARM's guide for the rock64](https://archlinuxarm.org/platforms/armv8/rockchip/rock64) (except that we use f2fs for root, instead of ext4),
+but use our tarball in place of theirs.
 
 1. Zero the beginning of the SD card
 
 ```
-# dd if=/dev/zero of=/dev/mmcblkX bs=1M count=32
+# dd if=/dev/zero of=/dev/sdX bs=1M count=32
 ```
 
 2. Start fdisk to partition the SD card
 
 ```
-# fdisk /dev/mmcblkX
+# fdisk /dev/sdX
 ```
 
 3. Inside fdisk,
@@ -331,25 +346,32 @@ in place of theirs.
     1. Type **o**. This will clear out any partitions on the drive
     2. Type **p** to list partitions. There should be no partitions left
     3. Type **n**, then **p** for primary, **1** for the first partition on the drive, **32768** for the first sector
-    4. Press ENTER to accept the default last sector
-    5. Write the partition table and exit by typing **w**
+    4. Type **+2G** to create the boot partition of 2GB.
+    5. Type **n**, **p**, **2** to create the swap partition. Press ENTER to accept the default first sector.
+    6. Type **+4G** to create the swap partition of 4GB. (In the hope that we get full hibernation support one day)
+    5. Type **n**, **p**, **3** to create the root partition. Press ENTER to accept the default first/last sector
+    6. Write the partition table and exit by typing **w**
 
-4. Create the **ext4** filesystem **without a Journal**
+4. Create the **ext4** filesystem **without a Journal** for boot, and **f2fs** filesystem for root
 
 ```
-# mkfs.ext4 -L ROOT_ARCH -O ^has_journal /dev/mmcblkXp1
+# mkfs.ext4 -L BOOT_ARCH -O ^has_journal /dev/sdX1
+# mkswap /dev/sdX2
+# mkfs.f2fs -L ROOT_ARCH -O extra_attr,inode_checksum,sb_checksum /dev/sdX3
+# blkid /dev/sdX2 # Note down the UUID
+# echo 'UUID="<UUID in previous command here>" none  swap  sw  0 0' >> /etc/fstab
 ```
 
-**NOTE:** Disabling the journal is helpful for simple flash devices
-like SD Cards to reduce successive writes. In rare cases, your filesystem
-may become corrupted, which may arise as a **boot loop**. Running 
-`fsck -y /dev/mmcblkXp1` on an external system can fix this issue.  
+**NOTE:** Disabling the journal is helpful for simple flash devices like SD Cards to reduce successive writes.
+In rare cases, your filesystem may become corrupted, which may arise as a boot loop.
+Running `fsck -y /dev/sdX1` on an external system can fix this issue.
 
 5. Mount the filesystem
 
 ```
-# mkdir /mnt/
-# mount /dev/mmcblkX /mnt
+# mount /dev/sdX2 /mnt
+# mkdir -p /mnt/boot
+# mount /dev/sdX1 /mnt/boot
 ```
 
 6. Install the root filesystem (as root not via sudo)
@@ -364,17 +386,18 @@ may become corrupted, which may arise as a **boot loop**. Running
 
 ```
 # cd /mnt/boot
-# dd if=idbloader.img of=/dev/mmcblkX seek=64 conv=notrunc,fsync
-# dd if=uboot.img of=/dev/mmcblkX seek=16384 conv=notrunc,fsync
-# dd if=trust.img of=/dev/mmcblkX seek=24576 conv=notrunc,fsync
+# dd if=idbloader.img of=/dev/sdX seek=64 conv=notrunc,fsync
+# dd if=uboot.img of=/dev/sdX seek=16384 conv=notrunc,fsync
+# dd if=trust.img of=/dev/sdX seek=24576 conv=notrunc,fsync
 ```
 
 8. Unmount and eject the SD card
 
 ```
 # cd
+# umount /mnt/boot
 # umount /mnt
-# eject /dev/mmcblkX
+# eject /dev/sdX
 ```
 
 ## Done!
