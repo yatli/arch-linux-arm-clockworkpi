@@ -1,4 +1,5 @@
 # ClockworkPi DevTerm A06 Gearbox
+# Maintainer: Yatao Li <me@yatao.info>
 # Maintainer: Cole Smith <cole.s.smith1@gmail.com>
 
 pkgname=gearbox-clockworkpi-a06
@@ -6,12 +7,12 @@ pkgver=1.0
 pkgrel=1
 pkgdesc="ClockworkPi DevTerm A06 Gearbox"
 arch=('any')
-url="https://github.com/clockworkpi/DevTerm/blob/main/Code/A06/devterm-a06-gearbox"
+url="https://github.com/yatli/DevTerm/blob/main/Code/A06/devterm-a06-gearbox"
 license=('LGPLv2')
 depends=('python>=3')
 groups=('clockworkpi-a06')
-source=("https://raw.githubusercontent.com/clockworkpi/DevTerm/main/Code/A06/devterm-a06-gearbox")
-md5sums=('2d991717c22be87245d47e7c86183a2e')
+source=("https://raw.githubusercontent.com/yatli/DevTerm/main/Code/A06/devterm-a06-gearbox")
+md5sums=('17163064ec9a597d83dc62c90b262183')
 
 package() {
     install -Dm755 "devterm-a06-gearbox" "$pkgdir/usr/bin/$pkgname"
