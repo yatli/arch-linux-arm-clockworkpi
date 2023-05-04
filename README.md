@@ -394,7 +394,7 @@ Running `fsck -y /dev/sdX1` on an external system can fix this issue.
 5. Mount the filesystem
 
 ```
-# mount /dev/sdX2 /mnt
+# mount /dev/sdX3 /mnt
 # mkdir -p /mnt/boot
 # mount /dev/sdX1 /mnt/boot
 ```
