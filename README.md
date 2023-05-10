@@ -356,13 +356,13 @@ but use our tarball in place of theirs.
 1. Zero the beginning of the SD card
 
 ```
-# dd if=/dev/zero of=/dev/mmcblkX bs=1M count=32
+# dd if=/dev/zero of=/dev/sdX bs=1M count=32
 ```
 
 2. Start fdisk to partition the SD card
 
 ```
-# fdisk /dev/mmcblkX
+# fdisk /dev/sdX
 ```
 
 3. Inside fdisk,
@@ -379,23 +379,23 @@ but use our tarball in place of theirs.
 4. Create the **ext4** filesystem **without a Journal** for boot, and **f2fs** filesystem for root
 
 ```
-# mkfs.ext4 -L BOOT_ARCH -O ^has_journal /dev/mmcblkX1
-# mkswap /dev/mmcblkX2
-# mkfs.f2fs -l ROOT_ARCH -O extra_attr,inode_checksum,sb_checksum /dev/mmcblkX3
+# mkfs.ext4 -L BOOT_ARCH -O ^has_journal /dev/sdX1
+# mkswap /dev/sdX2
+# mkfs.f2fs -l ROOT_ARCH -O extra_attr,inode_checksum,sb_checksum /dev/sdX3
 ```
 
 **IMPORTANT** The `mkswap` command will return the swap partition's UUID, which will be needed later. Please write it down.
 
 **NOTE:** Disabling the journal is helpful for simple flash devices like SD Cards to reduce successive writes.
 In rare cases, your filesystem may become corrupted, which may arise as a boot loop.
-Running `fsck -y /dev/mmcblkX1` on an external system can fix this issue.
+Running `fsck -y /dev/sdX1` on an external system can fix this issue.
 
 5. Mount the filesystem
 
 ```
-# mount /dev/mmcblkX3 /mnt
+# mount /dev/sdX3 /mnt
 # mkdir -p /mnt/boot
-# mount /dev/mmcblkX1 /mnt/boot
+# mount /dev/sdX1 /mnt/boot
 ```
 
 6. Install the root filesystem (as root not via sudo)
@@ -411,9 +411,9 @@ Running `fsck -y /dev/mmcblkX1` on an external system can fix this issue.
 
 ```
 # cd /mnt/boot
-# dd if=idbloader.img of=/dev/mmcblkX seek=64 conv=notrunc,fsync
-# dd if=uboot.img of=/dev/mmcblkX seek=16384 conv=notrunc,fsync
-# dd if=trust.img of=/dev/mmcblkX seek=24576 conv=notrunc,fsync
+# dd if=idbloader.img of=/dev/sdX seek=64 conv=notrunc,fsync
+# dd if=uboot.img of=/dev/sdX seek=16384 conv=notrunc,fsync
+# dd if=trust.img of=/dev/sdX seek=24576 conv=notrunc,fsync
 ```
 
 8. Unmount and eject the SD card
