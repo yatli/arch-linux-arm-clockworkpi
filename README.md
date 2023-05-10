@@ -125,7 +125,7 @@ For this section, **all commands will be run inside the chroot**.
 # locale-gen
 ```
 
-5. Set `fstab`
+5. Reference partitions in `/etc/fstab`
 
 ```
 # echo 'LABEL=ROOT_ARCH    /    f2fs    defaults,noatime    0    0' >> /etc/fstab
