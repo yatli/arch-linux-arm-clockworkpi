@@ -431,8 +431,7 @@ The SD card is now ready to be booted by the DevTerm! Good luck!
 
 ## Next Steps
 
-You will want to set up Wi-Fi on first boot. You can do so by
-using [NetworkManager](https://wiki.archlinux.org/title/NetworkManager).
+You will want to set up Wi-Fi on first boot. Use the command `nmtui`.
 
 Check out the [post-install suggestions](https://wiki.archlinux.org/title/General_recommendations) from Arch Linux for
 further configuration.
