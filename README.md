@@ -2,7 +2,7 @@
 
 Maintainer: Yatao Li
 
-Origianl Author: Cole Smith
+Original Author: Cole Smith
 
 License: LGPL-2.1
 
@@ -21,8 +21,7 @@ If you are running advanced filesystems on your host (for example `zfs`), don’
 ## Quickstart
 
 Pre-built root filesystem(s) are provided in the **Releases** tab. Skip to the **Prepare the SD Card** section if using
-a pre-built image. Replace `arch-linux-clockworkpi-a06-root-fs.tar.xz` with your downloaded file name in the guide
-steps.
+a pre-built image.
 
 **NOTE:** Please note the following defaults for the release filesystem:
 
@@ -52,8 +51,7 @@ We will start by creating an ARM chroot environment to build our root filesystem
 1. Install the required packages
 
 ```
-$ yay -S base-devel binfmt-qemu-static qemu-user-static arch-install-scripts
-
+$ yay -S base-devel qemu-user-static qemu-user-binfmt arch-install-scripts
 # systemctl restart systemd-binfmt.service
 ```
 
@@ -127,7 +125,7 @@ For this section, **all commands will be run inside the chroot**.
 # locale-gen
 ```
 
-5. Set `fstab`
+5. Reference partitions in `/etc/fstab`
 
 ```
 # echo 'LABEL=ROOT_ARCH    /    f2fs    defaults,noatime    0    0' >> /etc/fstab
@@ -325,7 +323,7 @@ $ exit
 ### Unmount The Root Filesystem
 
 ```
- # umonut root
+ # umount root
 ```
 
 # Tar The Root Filesystem
@@ -371,22 +369,22 @@ but use our tarball in place of theirs.
 
     1. Type **o**. This will clear out any partitions on the drive
     2. Type **p** to list partitions. There should be no partitions left
-    3. Type **n**, then **p** for primary, **1** for the first partition on the drive, **32768** for the first sector
-    4. Type **+2G** to create the boot partition of 2GB.
-    5. Type **n**, **p**, **2** to create the swap partition. Press ENTER to accept the default first sector.
-    6. Type **+4G** to create the swap partition of 4GB. (In the hope that we get full hibernation support one day)
-    5. Type **n**, **p**, **3** to create the root partition. Press ENTER to accept the default first/last sector
-    6. Write the partition table and exit by typing **w**
+    3. Type **n**, then **p** for primary, **1** for the first partition on the drive, **32768** for the first sector, then **+2G** for the last sector (boot partition, 2GB)
+	4. Type **p** and note the end sector number for the partition freshly created.
+    5. Type **n**, then **p**, **2** for the second partition, **use number from step 4 and add 2** as first sector, then **+4G** for the last sector (swap partition, 4GB)
+	6. Again, type **p** and note the end sector number for the partition freshly created.
+    7. Type **n**, then **p**, **3** for the third partition, **use number from step 6 and add 2** as first sector, then leave default for the last sector (root partition, takes all available space)
+    8. Write the partition table and exit by typing **w**
 
 4. Create the **ext4** filesystem **without a Journal** for boot, and **f2fs** filesystem for root
 
 ```
 # mkfs.ext4 -L BOOT_ARCH -O ^has_journal /dev/sdX1
 # mkswap /dev/sdX2
-# mkfs.f2fs -L ROOT_ARCH -O extra_attr,inode_checksum,sb_checksum /dev/sdX3
-# blkid /dev/sdX2 # Note down the UUID
-# echo 'UUID="<UUID in previous command here>" none  swap  sw  0 0' >> /etc/fstab
+# mkfs.f2fs -l ROOT_ARCH -O extra_attr,inode_checksum,sb_checksum /dev/sdX3
 ```
+
+**IMPORTANT** The `mkswap` command will return the swap partition's UUID, which will be needed later. Please write it down.
 
 **NOTE:** Disabling the journal is helpful for simple flash devices like SD Cards to reduce successive writes.
 In rare cases, your filesystem may become corrupted, which may arise as a boot loop.
@@ -405,6 +403,7 @@ Running `fsck -y /dev/sdX1` on an external system can fix this issue.
 ```
 # sudo su
 # bsdtar -xpf arch-linux-clockworkpi-a06-root-fs.tar.xz -C /mnt
+# echo 'UUID="<SWAP PARTITION UUID HERE>" none  swap  sw  0 0' >> /mnt/etc/fstab
 # exit
 ```
 
@@ -423,7 +422,7 @@ Running `fsck -y /dev/sdX1` on an external system can fix this issue.
 # cd
 # umount /mnt/boot
 # umount /mnt
-# eject /dev/sdX
+# sync
 ```
 
 ## Done!
@@ -432,8 +431,7 @@ The SD card is now ready to be booted by the DevTerm! Good luck!
 
 ## Next Steps
 
-You will want to set up Wi-Fi on first boot. You can do so by
-using [NetworkManager](https://wiki.archlinux.org/title/NetworkManager).
+You will want to set up Wi-Fi on first boot. Use the command `nmtui`.
 
 Check out the [post-install suggestions](https://wiki.archlinux.org/title/General_recommendations) from Arch Linux for
 further configuration.
