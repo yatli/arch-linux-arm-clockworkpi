@@ -6,8 +6,8 @@ pkgdesc="Arduino wiring-like library written in C for RaspberryPi."
 url="http://wiringpi.com/"
 arch=('aarch64')
 license=('LGPL3')
-makedepends=('git')
 conflicts=('wiringpi')
+depends=('libxcrypt-compat')
 source=('wiringpi-clockworkpi-cm4-bin.tar.gz')
 md5sums=('SKIP')
 
