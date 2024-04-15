@@ -1,2 +1,5 @@
 .idea
 pkgs
+/*/src
+/*/pkg
+/*/*.pkg.tar.zst

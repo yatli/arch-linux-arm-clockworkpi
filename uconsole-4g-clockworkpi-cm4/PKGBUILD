@@ -1,0 +1,17 @@
+# Maintainer: yatli <yatao.li -at- live.com>
+
+pkgname=uconsole-4g-clockworkpi-cm4
+pkgver=1.0
+pkgrel=1
+pkgdesc="ClockworkPi CM4 uConsole 4G modem management tool"
+arch=('aarch64')
+license=('LGPLv2')
+groups=('clockworkpi-cm4')
+source=("uconsole-4g-cm4")
+md5sums=('SKIP')
+
+package() {
+    # Install speaker/3.5mm switcher
+    mkdir -p "${pkgdir}/usr/local/bin"
+    install "${srcdir}/uconsole-4g-cm4" "${pkgdir}/usr/local/bin/"
+}

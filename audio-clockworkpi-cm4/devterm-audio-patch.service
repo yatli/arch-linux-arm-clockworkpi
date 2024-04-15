@@ -1,0 +1,10 @@
+[Unit]
+Description=devterm patch for audio speaker
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/audio_3.5_patch.py
+
+
+[Install]
+WantedBy=multi-user.target
