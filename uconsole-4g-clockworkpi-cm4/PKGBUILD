@@ -7,6 +7,7 @@ pkgdesc="ClockworkPi CM4 uConsole 4G modem management tool"
 arch=('aarch64')
 license=('LGPLv2')
 groups=('clockworkpi-cm4')
+depends=('bash')
 source=("uconsole-4g-cm4")
 md5sums=('SKIP')
 

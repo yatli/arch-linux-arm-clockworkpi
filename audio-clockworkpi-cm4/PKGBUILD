@@ -7,6 +7,7 @@ pkgdesc="ClockworkPi CM4 audio driver"
 arch=('aarch64')
 license=('LGPLv2')
 groups=('clockworkpi-cm4')
+depends=('python' 'systemd')
 source=("audio_3.5_patch.py"
         "devterm-audio-patch.service"
         "copyright")
