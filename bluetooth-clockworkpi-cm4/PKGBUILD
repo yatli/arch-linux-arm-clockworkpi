@@ -1,0 +1,34 @@
+# Maintainer: yatli <yatao.li -at- live.com>
+
+pkgname=bluetooth-clockworkpi-cm4
+pkgver=0.1
+pkgrel=1
+pkgdesc="ClockworkPi CM4 bluetooth driver"
+url="https://gist.github.com/whitelynx/9f9bd4cb266b3924c64dfdff14bce2e8"
+arch=('aarch64')
+license=('LGPLv2')
+groups=('clockworkpi-cm4')
+depends=(systemd bluez-utils bluez-deprecated-utils bash)
+source=(90-pi-bluetooth.rules
+        99-serial.rules
+        bthelper
+        bthelper@.service
+        btuart
+        hciuart.service
+        )
+sha256sums=('55bca8ca105cd590b420200a9bda8edcbb2e7412ea5b3fa15d56da01f017fecf'
+            'b6677826060a3ae66c6edb1211c04942fb2a20f7348f49b960f1b7b8b2a73b47'
+            'b02daf6a859af015fcdafde66721ece73b35b6e97ef6771f9628725f8318a8f4'
+            'e91bb6b612976fe4403c637008673ced66cba702dc0e0823372be387715f86fe'
+            '1c21b4c33a59d02de9dfa928a05146cddff42799d5665b0940938d32950835fc'
+            '3997dcf0cd4e7395597d4da71bd46786dad6164d3f0c2c5d52334255e77b0066')
+
+package() {
+    install -Dm644 "${srcdir}/90-pi-bluetooth.rules" "${pkgdir}/etc/udev/rules.d/"
+    install -Dm644 "${srcdir}/99-serial.rules" "${pkgdir}/etc/udev/rules.d/"
+    install -Dm644 "${srcdir}/bthelper@.service" "${pkgdir}/etc/systemd/system/"
+    install -Dm644 "${srcdir}/hciuart.service" "${pkgdir}/etc/systemd/system/"
+    install -D "${srcdir}/bthelper" "${pkgdir}/usr/bin/"
+    install -D "${srcdir}/btuart" "${pkgdir}/usr/bin/"
+}
+
