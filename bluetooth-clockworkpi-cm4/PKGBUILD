@@ -8,7 +8,7 @@ url="https://gist.github.com/whitelynx/9f9bd4cb266b3924c64dfdff14bce2e8"
 arch=('aarch64')
 license=('LGPLv2')
 groups=('clockworkpi-cm4')
-depends=(systemd bluez-utils bluez-deprecated-utils bash)
+depends=(systemd bluez-utils bluez-deprecated-tools bash)
 source=(90-pi-bluetooth.rules
         99-serial.rules
         bthelper
